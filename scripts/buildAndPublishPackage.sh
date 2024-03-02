@@ -9,7 +9,7 @@ run() {
 
     echo "Configuring credentials ..."
     scala-cli --power config github.token "value:${ghtoken}" --password-value
-    scala-cli --power config publish.secretKey "value:${gpgsecretkey}" --password-value
+    scala-cli --power config pgp.secretKey "value:${gpgsecretkey}" --password-value
     scala-cli --power config publish.credentials s01.oss.sonatype.org "value:${sonuser}" "value:${sonpass}" --password-value
 
     echo "Building ${folder} ..."
