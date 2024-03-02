@@ -9,7 +9,7 @@ run() {
 
     echo "Configuring credentials ..."
     scala-cli --power config github.token "value:${ghtoken}" --password-value
-    scala-cli --power config pgp.secretKey "value:${gpgsecretkey}" --password-value
+    scala-cli --power config publish.secretKey "value:${gpgsecretkey}" --password-value
     scala-cli --power config publish.credentials s01.oss.sonatype.org "value:${sonuser}" "value:${sonpass}" --password-value
 
     echo "Building ${folder} ..."
@@ -21,7 +21,8 @@ run() {
     scala-cli --power publish setup . --publish-repository central-s01 --project-version "$version"
     scala-cli --power publish . \
         --publish-repository central-s01 \
-        --project-version "$version"
+        --project-version "$version" \
+        --secret-key "$gpgsecretkey"
 
     #cs fetch "org.encalmo:${name}_3:${version}"
 }

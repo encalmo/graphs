@@ -5,7 +5,8 @@
 //> using test.resourceDir ./test-resources
 //> using publish.organization "org.encalmo"
 //> using publish.name "graphs"
-//> using publish.repository "github"
+//> using publish.repository "central-s01"
+//> using publish.url "https://github.com/encalmo/graphs"
 //> using publish.license "Apache-2.0"
 //> using publish.developer "arturopala|Artur Opala|https://github.com/arturopala"
 //> using publish.computeVersion "git:tag"
