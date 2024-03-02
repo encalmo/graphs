@@ -22,7 +22,7 @@ run() {
     scala-cli --power publish . \
         --publish-repository central-s01 \
         --project-version "$version" \
-        --secret-key "$gpgsecretkey"
+        --secret-key "value:${gpgsecretkey}"
 
     #cs fetch "org.encalmo:${name}_3:${version}"
 }
