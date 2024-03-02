@@ -8,6 +8,8 @@ help() {
 run() {
 
     echo "Configuring credentials ..."
+    scala-cli --power config github.token "value:${ghtoken}" --password-value
+    scala-cli --power config --create-pgp-key --pgp-password none
     scala-cli --power config publish.credentials s01.oss.sonatype.org "value:${sonuser}" "value:${sonpass}" --password-value
 
     echo "Building ${folder} ..."
