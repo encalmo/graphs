@@ -15,6 +15,8 @@ on:
         required: true     
       SONATYPE_PASSWORD:
         required: true 
+      GPG_SECRET_KEY:
+        required: true 
 
 permissions:
   id-token: write # This is required for requesting the JWT
@@ -40,7 +42,7 @@ jobs:
         name: Compute new version   
         run: ./scripts/computeNewVersion.sc --prefix='${{ env.TAG_PREFIX }}' --bump=${{ inputs.version-bump }} >> "$GITHUB_OUTPUT"
       - name: Build and publish
-        run: './scripts/buildAndPublishPackage.sh ${{ secrets.GITHUB_TOKEN }} ${{ secrets.SONATYPE_USER }} ${{ secrets.SONATYPE_PASSWORD }} ${{ steps.version.outputs.new_version }} ${{ inputs.tag-prefix }}'
+        run: './scripts/buildAndPublishPackage.sh ${{ secrets.GITHUB_TOKEN }} ${{ secrets.SONATYPE_USER }} ${{ secrets.SONATYPE_PASSWORD }} ${{ secrets.GPG_SECRET_KEY }} ${{ steps.version.outputs.new_version }} ${{ inputs.tag-prefix }}'
         shell: bash 
       - name: Push tag
         id: tag_version

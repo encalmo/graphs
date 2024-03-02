@@ -7,7 +7,6 @@
 //> using publish.name "graphs"
 //> using publish.repository "github"
 //> using publish.license "Apache-2.0"
-//> using publish.url "https://github.com/meridian-software/meridian-api-integration-tests"
 //> using publish.developer "arturopala|Artur Opala|https://github.com/arturopala"
 //> using publish.computeVersion "git:tag"
 //> using publish.versionControl "github:encalmo/graphs"

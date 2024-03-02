@@ -1,7 +1,7 @@
 #!/bin/sh
 
 help() {
-    echo "Usage: buildAndPublishPackage.sh folder ghtoken sonuser sonpass version name"
+    echo "Usage: buildAndPublishPackage.sh folder ghtoken sonuser sonpass gpgsecretkey version name"
     exit 2
 }
 
@@ -9,7 +9,7 @@ run() {
 
     echo "Configuring credentials ..."
     scala-cli --power config github.token "value:${ghtoken}" --password-value
-    scala-cli --power config --create-pgp-key --pgp-password none
+    scala-cli --power config publish.secretKey "value:${gpgsecretkey}" --password-value
     scala-cli --power config publish.credentials s01.oss.sonatype.org "value:${sonuser}" "value:${sonpass}" --password-value
 
     echo "Building ${folder} ..."
@@ -26,13 +26,14 @@ run() {
     #cs fetch "org.encalmo:${name}_3:${version}"
 }
 
-if [ $# -eq 5 ]; then
+if [ $# -eq 6 ]; then
 
     ghtoken=$1
     sonuser=$2
     sonpass=$3
-    version=$4
-    name=$5
+    gpgsecretkey=$4
+    version=$5
+    name=$6
 
     run
 
