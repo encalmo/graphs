@@ -18,7 +18,7 @@ run() {
     scala-cli --power test .
 
     echo "Publishing ..."
-    scala-cli --power publish setup . --publish-repository central-s01 --project-version "$version"
+    scala-cli --power publish setup . --publish-repository central-s01 --project-version "$version" --secret-key "value:${gpgsecretkey}"
     scala-cli --power publish . \
         --publish-repository central-s01 \
         --project-version "$version" \
