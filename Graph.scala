@@ -26,6 +26,7 @@ import scala.collection.immutable.ArraySeq
 trait Graph[N] {
   def nodes: Traversable[N]
   def adjacent: N => Traversable[N]
+  def hasAdjacent(node: N): Boolean
   def edges: Traversable[(N, N)]
   def contains(node: N): Boolean
   def reverse: Graph[N]
@@ -64,8 +65,9 @@ final class GenericReverseGraph[N](origin: Graph[N]) extends GenericGraph[N] {
   override val adjacent: N => Traversable[N] = node =>
     Traversable[N] { f =>
       for (n <- origin.nodes if (origin.adjacent(n).contains(node))) do f(n)
-
     }
+  override def hasAdjacent(node: N): Boolean =
+    origin.nodes.exists(n => adjacent(n).contains(node))
 
   override def edges: Traversable[(N, N)] = new Traversable[(N, N)] {
     def foreach[U](f: ((N, N)) => U) = {
@@ -80,6 +82,7 @@ final class MapGraph[N](
 ) extends GenericGraph[N] {
   override val nodes: Traversable[N] = Traversable.of(nodeMap.keys)
   override val adjacent: N => Traversable[N] = nodeMap
+  override def hasAdjacent(node: N): Boolean = nodeMap.get(node).exists(_.nonEmpty)
   override lazy val reverse: Graph[N] = Graph.hardCopyReversed[N](this)
   override def contains(node: N): Boolean = nodeMap.contains(node)
 
@@ -87,8 +90,16 @@ final class MapGraph[N](
     s"MapGraph($nodeMap)"
 }
 
+object MutableMapGraph {
+  inline def from[N](graph: Graph[N]): MutableMapGraph[N] =
+    graph match {
+      case x: MutableMapGraph[N] => x
+      case _                     => Graph.hardCopy(graph)
+    }
+}
+
 class MutableMapGraph[N](
-    private val nodeMap: MutableMap[N, ArrayBuffer[N]] = new HashMap[N, ArrayBuffer[N]]()
+    protected val nodeMap: MutableMap[N, ArrayBuffer[N]] = new HashMap[N, ArrayBuffer[N]]()
 ) extends GenericGraph[N]
     with Mutable[N] {
 
@@ -97,11 +108,28 @@ class MutableMapGraph[N](
   final override inline def contains(node: N): Boolean = nodeMap.contains(node)
 
   override val adjacent: N => Traversable[N] = nodeMap.view.mapValues(v => Traversable.of(v))
+  override def hasAdjacent(node: N): Boolean = nodeMap.get(node).exists(_.nonEmpty)
   override def reverse: Graph[N] = Graph.hardCopyReversed[N](this)
 
   final override def addOne(edge: (N, N)): this.type = {
     nodeMap.getOrElseUpdate(edge._1, { new ArrayBuffer[N]() }).addOne(edge._2)
     nodeMap.getOrElseUpdate(edge._2, { new ArrayBuffer[N]() })
+    this
+  }
+
+  final def prependOne(edge: (N, N)): this.type = {
+    nodeMap.getOrElseUpdate(edge._1, { new ArrayBuffer[N]() }).prepend(edge._2)
+    nodeMap.getOrElseUpdate(edge._2, { new ArrayBuffer[N]() })
+    this
+  }
+
+  final def prependOneIfNotExist(edge: (N, N)): this.type = {
+    nodeMap.updateWith(edge._1) {
+      case Some(existing) =>
+        if (!existing.contains(edge._2)) then Some(existing.prepend(edge._2)) else Some(existing)
+      case None => Some(ArrayBuffer(edge._2))
+    }
+    nodeMap.updateWith(edge._2)(_.orElse(Some(ArrayBuffer.empty)))
     this
   }
 
@@ -147,6 +175,28 @@ class MutableMapGraph[N](
   }
 
   final inline override def clear() = { nodeMap.clear() }
+
+  final def merge(other: MutableMapGraph[N]): MutableMapGraph[N] =
+    if (other.nodeMap.isEmpty) then this
+    else if (this.nodeMap.isEmpty) then other
+    else {
+      val mergedNodeMap = new HashMap[N, ArrayBuffer[N]]()
+      this.nodeMap.foreach(mergedNodeMap.addOne)
+      other.nodeMap.foreach((node, added) =>
+        mergedNodeMap.updateWith(node) {
+          case Some(existing) =>
+            if (added.isEmpty) then Some(existing)
+            else if (existing.isEmpty) then Some(added)
+            else {
+              val adjacent = ArrayBuffer.from(existing)
+              added.foreach(n => if (!adjacent.contains(n)) then adjacent.addOne(n))
+              Some(adjacent)
+            }
+          case None => Some(added)
+        }
+      )
+      MutableMapGraph(mergedNodeMap)
+    }
 }
 
 /** Graph operations. */
@@ -157,14 +207,20 @@ object Graph {
   final class GenericGraphImpl[N](
       val nodes: Traversable[N],
       val adjacent: N => Traversable[N]
-  ) extends GenericGraph[N]
+  ) extends GenericGraph[N] {
+
+    override def hasAdjacent(node: N): Boolean = adjacent(node).nonEmpty
+  }
 
   final class WeightedGraphImpl[N, V: Numeric](
       val nodes: Traversable[N],
       val adjacent: N => Traversable[N],
       val weight: (N, N) => V
   ) extends GenericGraph[N]
-      with Weighted[N, V]
+      with Weighted[N, V] {
+
+    override def hasAdjacent(node: N): Boolean = adjacent(node).nonEmpty
+  }
 
   def apply[N](): MutableMapGraph[N] = new MutableMapGraph[N]()
 
@@ -587,10 +643,7 @@ object Graph {
       mergedNode: N,
       removedNode: N
   ): MutableMapGraph[N] = {
-    val graph: MutableMapGraph[N] = g match {
-      case x: MutableMapGraph[N] => x
-      case _                     => Graph.hardCopy(g)
-    }
+    val graph = MutableMapGraph.from(g)
     // merge two adjacent lists, remove self-loops
     val removedAdjacent = graph.adjacent(removedNode)
     val mergedAdjacent = graph.adjacent(mergedNode)
@@ -631,10 +684,7 @@ object Graph {
       queue
     }
 
-    val graph: MutableMapGraph[N] = g match {
-      case x: MutableMapGraph[N] => x
-      case _                     => Graph.hardCopy(g)
-    }
+    val graph = MutableMapGraph.from(g)
     val nodesQueue = randomizedQueue(graph.nodes)
     while (graph.nodesCount > 2) {
       val node1 = nodesQueue.dequeue
@@ -648,4 +698,143 @@ object Graph {
     val (_, adjacent) = graph.head
     adjacent.size
   }
+
+  /** Merges two graphs without duplicating existing nodes */
+  def merge[N](graph1: Graph[N], graph2: Graph[N]): Graph[N] =
+    MutableMapGraph.from(graph1).merge(MutableMapGraph.from(graph2))
+
+  def leavesOf[N](graph: Graph[N]): Traversable[N] =
+    graph.nodes.filterNot(n => graph.hasAdjacent(n))
+
+  def rootsOf[N](graph: Graph[N]): Traversable[N] =
+    val reversed = graph.reverse
+    reversed.nodes.filterNot(n => reversed.hasAdjacent(n))
+
+  /** Returns a new graph containing only all the transitive successors of the given node. */
+  def successorsOf[N](graph: Graph[N], node: N): Graph[N] =
+    val result: MutableMapGraph[N] = MutableMapGraph()
+    val queue = new Queue[N]()
+    queue.enqueue(node)
+    while (!queue.isEmpty) {
+      val n = queue.dequeue
+      if (!(result.contains(n))) {
+        val adjacent = graph.adjacent(n)
+        result.update(n, adjacent.toArrayBuffer)
+        for (next <- adjacent) queue.enqueue(next)
+      }
+    }
+    result
+
+  /** Returns a new graph containing only all the transitive successors of the given nodes. */
+  def successorsOf[N](graph: Graph[N], nodes: N*): Graph[N] =
+    val result: MutableMapGraph[N] = MutableMapGraph()
+    val queue = new Queue[N]()
+    queue.enqueueAll(nodes)
+    while (!queue.isEmpty) {
+      val n = queue.dequeue
+      if (!(result.contains(n))) {
+        val adjacent = graph.adjacent(n)
+        result.update(n, adjacent.toArrayBuffer)
+        for (next <- adjacent) queue.enqueue(next)
+      }
+    }
+    result
+
+  /** Returns a new graph containing only all the transitive predecessors of the given node. */
+  def predecessorsOf[N](graph: Graph[N], node: N): Graph[N] =
+    val reversed = graph.reverse
+    val result: MutableMapGraph[N] = MutableMapGraph()
+    val explored = HashSet[N]()
+    val queue = new Queue[N]()
+    queue.enqueue(node)
+    while (!queue.isEmpty) {
+      val n = queue.dequeue
+      if (!(explored.contains(n))) {
+        explored.add(n)
+        val adjacent = reversed.adjacent(n)
+        for (next <- adjacent) {
+          result.prependOne((next, n))
+          queue.enqueue(next)
+        }
+      }
+    }
+    result
+
+  /** Returns a new graph containing only all the transitive predecessors of the given nodes. */
+  def predecessorsOf[N](graph: Graph[N], nodes: N*): Graph[N] =
+    val reversed = graph.reverse
+    val result: MutableMapGraph[N] = MutableMapGraph()
+    val explored = HashSet[N]()
+    val queue = new Queue[N]()
+    queue.enqueueAll(nodes)
+    while (!queue.isEmpty) {
+      val n = queue.dequeue
+      if (!(explored.contains(n))) {
+        explored.add(n)
+        val adjacent = reversed.adjacent(n)
+        for (next <- adjacent) {
+          result.prependOne((next, n))
+          queue.enqueue(next)
+        }
+      }
+    }
+    result
+
+  /** Returns a new graph containing only all the transitive predecessors and successors of the given node. */
+  def predecessorsAndSuccessorsOf[N](graph: Graph[N], node: N): Graph[N] =
+    val result: MutableMapGraph[N] = MutableMapGraph()
+    val queue = new Queue[N]()
+    queue.enqueue(node)
+    while (!queue.isEmpty) {
+      val n = queue.dequeue
+      if (!(result.contains(n))) {
+        val adjacent = graph.adjacent(n)
+        result.update(n, adjacent.toArrayBuffer)
+        for (next <- adjacent) queue.enqueue(next)
+      }
+    }
+    lazy val reversed = graph.reverse
+    val explored = result.nodes.toHashSet - node
+    queue.enqueue(node)
+    while (!queue.isEmpty) {
+      val n = queue.dequeue
+      if (!(explored.contains(n))) {
+        explored.add(n)
+        val adjacent = reversed.adjacent(n)
+        for (next <- adjacent) {
+          result.prependOneIfNotExist((next, n))
+          queue.enqueue(next)
+        }
+      }
+    }
+    result
+
+  /** Returns a new graph containing only all the transitive predecessors and successors of the given nodes. */
+  def predecessorsAndSuccessorsOf[N](graph: Graph[N], nodes: N*): Graph[N] =
+    val result: MutableMapGraph[N] = MutableMapGraph()
+    val queue = new Queue[N]()
+    queue.enqueueAll(nodes)
+    while (!queue.isEmpty) {
+      val n = queue.dequeue
+      if (!(result.contains(n))) {
+        val adjacent = graph.adjacent(n)
+        result.update(n, adjacent.toArrayBuffer)
+        for (next <- adjacent) queue.enqueue(next)
+      }
+    }
+    lazy val reversed = graph.reverse
+    val explored = result.nodes.toHashSet -- nodes
+    queue.enqueueAll(nodes)
+    while (!queue.isEmpty) {
+      val n = queue.dequeue
+      if (!(explored.contains(n))) {
+        explored.add(n)
+        val adjacent = reversed.adjacent(n)
+        for (next <- adjacent) {
+          result.prependOneIfNotExist((next, n))
+          queue.enqueue(next)
+        }
+      }
+    }
+    result
 }

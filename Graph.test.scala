@@ -2,7 +2,6 @@ package org.encalmo.data
 
 import scala.io.Source
 import scala.language.implicitConversions
-
 class GraphSpec extends munit.FunSuite {
 
   val graph1 = Graph[Int](
@@ -59,6 +58,20 @@ class GraphSpec extends munit.FunSuite {
     1 -> Seq(0, 2, 3),
     2 -> Seq(0, 1, 3),
     3 -> Seq(0, 1, 2)
+  )
+
+  val graph7 = Graph[Int](
+    1 -> Seq(2, 3),
+    2 -> Seq(3),
+    3 -> Seq(4, 8),
+    4 -> Seq(8),
+    5 -> Seq(6, 7),
+    6 -> Seq(7),
+    7 -> Seq(5),
+    8 -> Seq(11),
+    9 -> Seq(10),
+    10 -> Seq(),
+    11 -> Seq()
   )
 
   lazy val veryLargeGraph = Graph.readFromEdgeListFile(Source.fromResource("SCC.txt"))
@@ -156,9 +169,15 @@ class GraphSpec extends munit.FunSuite {
     assert(cycles.isEmpty)
   }
 
+  test("should find cycles - graph7") {
+    val cycles = Graph.findCycles(graph7)
+    assert(cycles.size == 1)
+  }
+
   test("should check cycles") {
     assert(Graph.hasCycles(graph2))
     assert(!Graph.hasCycles(graph3))
+    assert(Graph.hasCycles(graph7))
   }
 
   test("should sort topologically - graph3") {
@@ -224,6 +243,314 @@ class GraphSpec extends munit.FunSuite {
     val result = Graph.findStronglyConnectedComponents(veryLargeGraph)
     val ten: Seq[Int] = (result.take(10).map(_.size)).toSeq
     assert(ten.sameElements(Seq(434821, 968, 459, 313, 211, 205, 197, 177, 162, 152)))
+  }
+
+  test("should find root nodes of the graph") {
+    assertEquals(
+      Graph.rootsOf(graph7).toSeq,
+      Seq(1, 9)
+    )
+  }
+
+  test("should find leaf nodes of the graph") {
+    assertEquals(
+      Graph.leavesOf(graph7).toSeq,
+      Seq(10, 11)
+    )
+  }
+
+  test("should filter graph to have only successors of the node") {
+    val graph = graph7
+
+    assertEquals(
+      Graph.successorsOf(graph, 1).edges.toSeq,
+      Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
+    )
+    assertEquals(
+      Graph.successorsOf(graph, 2).edges.toSeq,
+      Seq(2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
+    )
+    assertEquals(
+      Graph.successorsOf(graph, 3).edges.toSeq,
+      Seq(3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
+    )
+    assertEquals(
+      Graph.successorsOf(graph, 4).edges.toSeq,
+      Seq(4 -> 8, 8 -> 11)
+    )
+    assertEquals(
+      Graph.successorsOf(graph, 5).edges.toSeq,
+      Seq(5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5)
+    )
+    assertEquals(
+      Graph.successorsOf(graph, 6).edges.toSeq,
+      Seq(5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5)
+    )
+    assertEquals(
+      Graph.successorsOf(graph, 7).edges.toSeq,
+      Seq(5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5)
+    )
+    assertEquals(
+      Graph.successorsOf(graph, 8).edges.toSeq,
+      Seq(8 -> 11)
+    )
+    assertEquals(
+      Graph.successorsOf(graph, 9).edges.toSeq,
+      Seq(9 -> 10)
+    )
+    assertEquals(
+      Graph.successorsOf(graph, 10).edges.toSeq,
+      Seq.empty
+    )
+    assertEquals(
+      Graph.successorsOf(graph, 11).edges.toSeq,
+      Seq.empty
+    )
+  }
+
+  test("should filter graph to have only successors of the nodes") {
+    val graph = graph7
+
+    assertEquals(
+      Graph.successorsOf(graph, 1, 2).edges.toSeq,
+      Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
+    )
+    assertEquals(
+      Graph.successorsOf(graph, 2, 3).edges.toSeq,
+      Seq(2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
+    )
+    assertEquals(
+      Graph.successorsOf(graph, 3, 4).edges.toSeq,
+      Seq(3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
+    )
+    assertEquals(
+      Graph.successorsOf(graph, 4, 5).edges.toSeq,
+      Seq(4 -> 8, 5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5, 8 -> 11)
+    )
+    assertEquals(
+      Graph.successorsOf(graph, 5, 6).edges.toSeq,
+      Seq(5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5)
+    )
+    assertEquals(
+      Graph.successorsOf(graph, 6, 7).edges.toSeq,
+      Seq(5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5)
+    )
+    assertEquals(
+      Graph.successorsOf(graph, 7, 8).edges.toSeq,
+      Seq(5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5, 8 -> 11)
+    )
+    assertEquals(
+      Graph.successorsOf(graph, 8, 9).edges.toSeq,
+      Seq(8 -> 11, 9 -> 10)
+    )
+    assertEquals(
+      Graph.successorsOf(graph, 9, 10).edges.toSeq,
+      Seq(9 -> 10)
+    )
+    assertEquals(
+      Graph.successorsOf(graph, 10, 11).edges.toSeq,
+      Seq.empty
+    )
+    assertEquals(
+      Graph.successorsOf(graph, 11, 1).edges.toSeq,
+      Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
+    )
+  }
+
+  test("should filter graph to have only predecessors of the node") {
+    val graph = graph7
+
+    assertEquals(
+      Graph.predecessorsOf(graph, 1).edges.toSeq,
+      Seq.empty
+    )
+    assertEquals(
+      Graph.predecessorsOf(graph, 2).edges.toSeq,
+      Seq(1 -> 2)
+    )
+    assertEquals(
+      Graph.predecessorsOf(graph, 3).edges.toSeq,
+      Seq(1 -> 2, 1 -> 3, 2 -> 3)
+    )
+    assertEquals(
+      Graph.predecessorsOf(graph, 4).edges.toSeq,
+      Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4)
+    )
+    assertEquals(
+      Graph.predecessorsOf(graph, 5).edges.toSeq,
+      Seq(5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5)
+    )
+    assertEquals(
+      Graph.predecessorsOf(graph, 6).edges.toSeq,
+      Seq(5 -> 7, 5 -> 6, 6 -> 7, 7 -> 5)
+    )
+    assertEquals(
+      Graph.predecessorsOf(graph, 7).edges.toSeq,
+      Seq(5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5)
+    )
+    assertEquals(
+      Graph.predecessorsOf(graph, 8).edges.toSeq,
+      Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8)
+    )
+    assertEquals(
+      Graph.predecessorsOf(graph, 9).edges.toSeq,
+      Seq.empty
+    )
+    assertEquals(
+      Graph.predecessorsOf(graph, 10).edges.toSeq,
+      Seq(9 -> 10)
+    )
+    assertEquals(
+      Graph.predecessorsOf(graph, 11).edges.toSeq,
+      Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
+    )
+  }
+
+  test("should filter graph to have only predecessors of the nodes") {
+    val graph = graph7
+
+    assertEquals(
+      Graph.predecessorsOf(graph, 1, 2).edges.toSeq,
+      Seq(1 -> 2)
+    )
+    assertEquals(
+      Graph.predecessorsOf(graph, 2, 3).edges.toSeq,
+      Seq(1 -> 3, 1 -> 2, 2 -> 3)
+    )
+    assertEquals(
+      Graph.predecessorsOf(graph, 3, 4).edges.toSeq,
+      Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4)
+    )
+    assertEquals(
+      Graph.predecessorsOf(graph, 4, 5).edges.toSeq,
+      Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5)
+    )
+    assertEquals(
+      Graph.predecessorsOf(graph, 5, 6).edges.toSeq,
+      Seq(5 -> 7, 5 -> 6, 6 -> 7, 7 -> 5)
+    )
+    assertEquals(
+      Graph.predecessorsOf(graph, 6, 7).edges.toSeq,
+      Seq(5 -> 7, 5 -> 6, 6 -> 7, 7 -> 5)
+    )
+    assertEquals(
+      Graph.predecessorsOf(graph, 7, 8).edges.toSeq,
+      Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5)
+    )
+    assertEquals(
+      Graph.predecessorsOf(graph, 8, 9).edges.toSeq,
+      Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8)
+    )
+    assertEquals(
+      Graph.predecessorsOf(graph, 9, 10).edges.toSeq,
+      Seq(9 -> 10)
+    )
+    assertEquals(
+      Graph.predecessorsOf(graph, 10, 11).edges.toSeq,
+      Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11, 9 -> 10)
+    )
+    assertEquals(
+      Graph.predecessorsOf(graph, 11, 1).edges.toSeq,
+      Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
+    )
+  }
+
+  test("should filter graph to have only predecessors and successors of the node") {
+    val graph = graph7
+
+    assertEquals(
+      Graph.predecessorsAndSuccessorsOf(graph, 1).edges.toSeq,
+      Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
+    )
+    assertEquals(
+      Graph.predecessorsAndSuccessorsOf(graph, 2).edges.toSeq,
+      Seq(1 -> 2, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
+    )
+    assertEquals(
+      Graph.predecessorsAndSuccessorsOf(graph, 3).edges.toSeq,
+      Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
+    )
+    assertEquals(
+      Graph.predecessorsAndSuccessorsOf(graph, 4).edges.toSeq,
+      Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 4 -> 8, 8 -> 11)
+    )
+    assertEquals(
+      Graph.predecessorsAndSuccessorsOf(graph, 5).edges.toSeq,
+      Seq(5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5)
+    )
+    assertEquals(
+      Graph.predecessorsAndSuccessorsOf(graph, 6).edges.toSeq,
+      Seq(5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5)
+    )
+    assertEquals(
+      Graph.predecessorsAndSuccessorsOf(graph, 7).edges.toSeq,
+      Seq(5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5)
+    )
+    assertEquals(
+      Graph.predecessorsAndSuccessorsOf(graph, 8).edges.toSeq,
+      Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
+    )
+    assertEquals(
+      Graph.predecessorsAndSuccessorsOf(graph, 9).edges.toSeq,
+      Seq(9 -> 10)
+    )
+    assertEquals(
+      Graph.predecessorsAndSuccessorsOf(graph, 10).edges.toSeq,
+      Seq(9 -> 10)
+    )
+    assertEquals(
+      Graph.predecessorsAndSuccessorsOf(graph, 11).edges.toSeq,
+      Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
+    )
+  }
+
+  test("should filter graph to have only predecessors and successors of the nodes") {
+    val graph = graph7
+
+    assertEquals(
+      Graph.predecessorsAndSuccessorsOf(graph, 1, 2).edges.toSeq,
+      Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
+    )
+    assertEquals(
+      Graph.predecessorsAndSuccessorsOf(graph, 2, 3).edges.toSeq,
+      Seq(1 -> 3, 1 -> 2, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
+    )
+    assertEquals(
+      Graph.predecessorsAndSuccessorsOf(graph, 3, 4).edges.toSeq,
+      Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
+    )
+    assertEquals(
+      Graph.predecessorsAndSuccessorsOf(graph, 4, 5).edges.toSeq,
+      Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 4 -> 8, 5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5, 8 -> 11)
+    )
+    assertEquals(
+      Graph.predecessorsAndSuccessorsOf(graph, 5, 6).edges.toSeq,
+      Seq(5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5)
+    )
+    assertEquals(
+      Graph.predecessorsAndSuccessorsOf(graph, 6, 7).edges.toSeq,
+      Seq(5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5)
+    )
+    assertEquals(
+      Graph.predecessorsAndSuccessorsOf(graph, 7, 8).edges.toSeq,
+      Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5, 8 -> 11)
+    )
+    assertEquals(
+      Graph.predecessorsAndSuccessorsOf(graph, 8, 9).edges.toSeq,
+      Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11, 9 -> 10)
+    )
+    assertEquals(
+      Graph.predecessorsAndSuccessorsOf(graph, 9, 10).edges.toSeq,
+      Seq(9 -> 10)
+    )
+    assertEquals(
+      Graph.predecessorsAndSuccessorsOf(graph, 10, 11).edges.toSeq,
+      Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11, 9 -> 10)
+    )
+    assertEquals(
+      Graph.predecessorsAndSuccessorsOf(graph, 11).edges.toSeq,
+      Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
+    )
   }
 
 }

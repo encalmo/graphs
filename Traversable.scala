@@ -4,7 +4,6 @@ import scala.language.implicitConversions
 import scala.util.boundary
 
 import boundary.break
-import scala.reflect.TypeTest
 
 /** Abstraction of the collection of items accessible mainly using the {foreach} method.
   */
@@ -41,6 +40,8 @@ trait Traversable[N] {
       foreach(n => break(false))
       true
     }
+
+  inline def nonEmpty: Boolean = !isEmpty
 
   def foldLeft[R](initial: R)(f: (R, N) => R): R = {
     var result: R = initial
@@ -123,6 +124,18 @@ trait Traversable[N] {
 
   def toMutableSeq: collection.mutable.Seq[N] = {
     val builder = collection.mutable.Seq.newBuilder[N]
+    foreach(n => builder.addOne(n))
+    builder.result()
+  }
+
+  def toArrayBuffer: collection.mutable.ArrayBuffer[N] = {
+    val builder = collection.mutable.ArrayBuffer.newBuilder[N]
+    foreach(n => builder.addOne(n))
+    builder.result()
+  }
+
+  def toHashSet: collection.mutable.HashSet[N] = {
+    val builder = collection.mutable.HashSet.newBuilder[N]
     foreach(n => builder.addOne(n))
     builder.result()
   }

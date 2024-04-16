@@ -1,4 +1,4 @@
-//> using scala 3.4.0
+//> using scala 3.4.1
 //> using jvm 21
 //> using dep org.scalameta::munit:1.0.0-M11
 //> using option -Xmax-inlines 128
