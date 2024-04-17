@@ -13,10 +13,10 @@ on:
           - minor
           - patch
           - keep
-  push:
-    branches: [main]
-    paths:
-      - '*.scala'        
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - '*.scala'        
 
 jobs:
   ReleasePackage:

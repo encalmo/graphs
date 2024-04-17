@@ -5,7 +5,7 @@
 // the git tags having a given prefix
 //----------------------------------------
 
-//> using scala 3.4.0
+//> using scala 3.4.1
 //> using jvm 21
 //> using toolkit default
 

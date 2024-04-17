@@ -11,3 +11,4 @@
 //> using publish.developer "arturopala|Artur Opala|https://github.com/arturopala"
 //> using publish.computeVersion "git:tag"
 //> using publish.versionControl "github:encalmo/graphs"
+//> using publish.version "0.9.0"
