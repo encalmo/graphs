@@ -5,9 +5,9 @@
 // the git tags having a given prefix
 //----------------------------------------
 
-//> using scala 3.4.1
+//> using scala 3.5.2
 //> using jvm 21
-//> using toolkit default
+//> using toolkit 0.6.0
 
 val tagPrefix = getArg("--prefix", "v")
 val bumpMethod = getArg("--bump", "major")

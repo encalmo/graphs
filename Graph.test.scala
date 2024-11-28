@@ -99,8 +99,7 @@ class GraphSpec extends munit.FunSuite {
   test("should search graph with dfs") {
     val graph = graph2
     var counter = 0
-    Graph.dfs(
-      graph,
+    Graph.dfs(graph)(
       new Graph.DfsVisitor[Int] {
         override def before(node: Int) = {
           counter = counter + 1
@@ -129,14 +128,13 @@ class GraphSpec extends munit.FunSuite {
 
   test("should breath-first search the very large graph - sccGraph") {
     var counter = 0
-    Graph.bfs(veryLargeGraph, { (n: Int) => counter = counter + 1 })
+    Graph.bfs(veryLargeGraph)({ (n: Int) => counter = counter + 1 })
     assert(counter == veryLargeGraph.nodesCount, s"should be ${veryLargeGraph.nodesCount} but is ${counter}")
   }
 
   test("should depth-first search the weighted graph - dijkstraGraph") {
     var counter = 0
-    Graph.dfs(
-      weightedGraph,
+    Graph.dfs(weightedGraph)(
       new Graph.DfsVisitor[Int] {
         override def before(node: Int) = {
           counter = counter + 1
@@ -148,8 +146,7 @@ class GraphSpec extends munit.FunSuite {
 
   test("should depth-first search the very large graph - sccGraph") {
     var counter = 0
-    Graph.dfs(
-      veryLargeGraph,
+    Graph.dfs(veryLargeGraph)(
       new Graph.DfsVisitor[Int] {
         override inline def before(node: Int) = {
           counter = counter + 1
@@ -191,7 +188,7 @@ class GraphSpec extends munit.FunSuite {
   }
 
   test("should compute shortest path - graph3") {
-    val (distance, path) = Graph.findShortestPath(graph3, 1, 5)
+    val (distance, path) = graph3.findShortestPath(1, 5)
     assert(distance == 4, s"should be 4 but is $distance : $path")
     assertEquals(path, List((1, 3), (3, 5)), s"$path")
   }
@@ -200,14 +197,14 @@ class GraphSpec extends munit.FunSuite {
     assert(weightedGraph.nodesCount == 200)
     assert(weightedGraph.weight(200, 108) == 9976)
     assert(weightedGraph.adjacent(31).size == 21)
-    val path1 = Graph.findShortestPath(weightedGraph, 1, 197)
+    val path1 = weightedGraph.findShortestPath(1, 197)
     assertEquals(path1, (3068, List((1, 114), (114, 103), (103, 110), (110, 197))))
-    val path2 = Graph.findShortestPath(weightedGraph, 1, 115)
+    val path2 = weightedGraph.findShortestPath(1, 115)
     assertEquals(path2, (2399, List((1, 80), (80, 115))), s"$path2")
   }
 
   test("should compute all shortest paths - graph3") {
-    val distance = Graph.findShortestPaths(graph3, 1)
+    val distance = graph3.findShortestPaths(1)
     assert(distance.size == 5)
     assertEquals(distance, Map(1 -> 0, 2 -> 1, 3 -> 2, 4 -> 3, 5 -> 4))
   }
@@ -216,17 +213,17 @@ class GraphSpec extends munit.FunSuite {
     assert(weightedGraph.nodesCount == 200)
     assert(weightedGraph.weight(200, 108) == 9976)
     assert(weightedGraph.adjacent(31).size == 21)
-    val distance = Graph.findShortestPaths(weightedGraph, 1)
+    val distance = weightedGraph.findShortestPaths(1)
     val nodes = Seq(7, 37, 59, 82, 99, 115, 133, 165, 188, 197)
     val result = nodes map distance
     assertEquals(result, List(2599, 2610, 2947, 2052, 2367, 2399, 2029, 2442, 2505, 3068))
   }
 
   test("should merge nodes") {
-    val g1 = Graph.mergeNodes(graph5, 1, 0)
+    val g1 = graph5.mergeNodes(1, 0)
     assert(!g1.contains(0))
     assert(g1.contains(1))
-    val g2 = Graph.mergeNodes(graph6, 2, 1)
+    val g2 = graph6.mergeNodes(2, 1)
     assert(!g2.contains(1))
     assert(g2.contains(2))
   }
@@ -263,47 +260,47 @@ class GraphSpec extends munit.FunSuite {
     val graph = graph7
 
     assertEquals(
-      Graph.successorsOf(graph, 1).edges.toSeq,
+      graph.successorsOf(1).edges.toSeq,
       Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
     )
     assertEquals(
-      Graph.successorsOf(graph, 2).edges.toSeq,
+      graph.successorsOf(2).edges.toSeq,
       Seq(2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
     )
     assertEquals(
-      Graph.successorsOf(graph, 3).edges.toSeq,
+      graph.successorsOf(3).edges.toSeq,
       Seq(3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
     )
     assertEquals(
-      Graph.successorsOf(graph, 4).edges.toSeq,
+      graph.successorsOf(4).edges.toSeq,
       Seq(4 -> 8, 8 -> 11)
     )
     assertEquals(
-      Graph.successorsOf(graph, 5).edges.toSeq,
+      graph.successorsOf(5).edges.toSeq,
       Seq(5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5)
     )
     assertEquals(
-      Graph.successorsOf(graph, 6).edges.toSeq,
+      graph.successorsOf(6).edges.toSeq,
       Seq(5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5)
     )
     assertEquals(
-      Graph.successorsOf(graph, 7).edges.toSeq,
+      graph.successorsOf(7).edges.toSeq,
       Seq(5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5)
     )
     assertEquals(
-      Graph.successorsOf(graph, 8).edges.toSeq,
+      graph.successorsOf(8).edges.toSeq,
       Seq(8 -> 11)
     )
     assertEquals(
-      Graph.successorsOf(graph, 9).edges.toSeq,
+      graph.successorsOf(9).edges.toSeq,
       Seq(9 -> 10)
     )
     assertEquals(
-      Graph.successorsOf(graph, 10).edges.toSeq,
+      graph.successorsOf(10).edges.toSeq,
       Seq.empty
     )
     assertEquals(
-      Graph.successorsOf(graph, 11).edges.toSeq,
+      graph.successorsOf(11).edges.toSeq,
       Seq.empty
     )
   }
@@ -312,47 +309,47 @@ class GraphSpec extends munit.FunSuite {
     val graph = graph7
 
     assertEquals(
-      Graph.successorsOf(graph, 1, 2).edges.toSeq,
+      graph.successorsOf(1, 2).edges.toSeq,
       Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
     )
     assertEquals(
-      Graph.successorsOf(graph, 2, 3).edges.toSeq,
+      graph.successorsOf(2, 3).edges.toSeq,
       Seq(2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
     )
     assertEquals(
-      Graph.successorsOf(graph, 3, 4).edges.toSeq,
+      graph.successorsOf(3, 4).edges.toSeq,
       Seq(3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
     )
     assertEquals(
-      Graph.successorsOf(graph, 4, 5).edges.toSeq,
+      graph.successorsOf(4, 5).edges.toSeq,
       Seq(4 -> 8, 5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5, 8 -> 11)
     )
     assertEquals(
-      Graph.successorsOf(graph, 5, 6).edges.toSeq,
+      graph.successorsOf(5, 6).edges.toSeq,
       Seq(5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5)
     )
     assertEquals(
-      Graph.successorsOf(graph, 6, 7).edges.toSeq,
+      graph.successorsOf(6, 7).edges.toSeq,
       Seq(5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5)
     )
     assertEquals(
-      Graph.successorsOf(graph, 7, 8).edges.toSeq,
+      graph.successorsOf(7, 8).edges.toSeq,
       Seq(5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5, 8 -> 11)
     )
     assertEquals(
-      Graph.successorsOf(graph, 8, 9).edges.toSeq,
+      graph.successorsOf(8, 9).edges.toSeq,
       Seq(8 -> 11, 9 -> 10)
     )
     assertEquals(
-      Graph.successorsOf(graph, 9, 10).edges.toSeq,
+      graph.successorsOf(9, 10).edges.toSeq,
       Seq(9 -> 10)
     )
     assertEquals(
-      Graph.successorsOf(graph, 10, 11).edges.toSeq,
+      graph.successorsOf(10, 11).edges.toSeq,
       Seq.empty
     )
     assertEquals(
-      Graph.successorsOf(graph, 11, 1).edges.toSeq,
+      graph.successorsOf(11, 1).edges.toSeq,
       Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
     )
   }
@@ -361,47 +358,47 @@ class GraphSpec extends munit.FunSuite {
     val graph = graph7
 
     assertEquals(
-      Graph.predecessorsOf(graph, 1).edges.toSeq,
+      graph.predecessorsOf(1).edges.toSeq,
       Seq.empty
     )
     assertEquals(
-      Graph.predecessorsOf(graph, 2).edges.toSeq,
+      graph.predecessorsOf(2).edges.toSeq,
       Seq(1 -> 2)
     )
     assertEquals(
-      Graph.predecessorsOf(graph, 3).edges.toSeq,
+      graph.predecessorsOf(3).edges.toSeq,
       Seq(1 -> 2, 1 -> 3, 2 -> 3)
     )
     assertEquals(
-      Graph.predecessorsOf(graph, 4).edges.toSeq,
+      graph.predecessorsOf(4).edges.toSeq,
       Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4)
     )
     assertEquals(
-      Graph.predecessorsOf(graph, 5).edges.toSeq,
+      graph.predecessorsOf(5).edges.toSeq,
       Seq(5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5)
     )
     assertEquals(
-      Graph.predecessorsOf(graph, 6).edges.toSeq,
+      graph.predecessorsOf(6).edges.toSeq,
       Seq(5 -> 7, 5 -> 6, 6 -> 7, 7 -> 5)
     )
     assertEquals(
-      Graph.predecessorsOf(graph, 7).edges.toSeq,
+      graph.predecessorsOf(7).edges.toSeq,
       Seq(5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5)
     )
     assertEquals(
-      Graph.predecessorsOf(graph, 8).edges.toSeq,
+      graph.predecessorsOf(8).edges.toSeq,
       Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8)
     )
     assertEquals(
-      Graph.predecessorsOf(graph, 9).edges.toSeq,
+      graph.predecessorsOf(9).edges.toSeq,
       Seq.empty
     )
     assertEquals(
-      Graph.predecessorsOf(graph, 10).edges.toSeq,
+      graph.predecessorsOf(10).edges.toSeq,
       Seq(9 -> 10)
     )
     assertEquals(
-      Graph.predecessorsOf(graph, 11).edges.toSeq,
+      graph.predecessorsOf(11).edges.toSeq,
       Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
     )
   }
@@ -410,47 +407,47 @@ class GraphSpec extends munit.FunSuite {
     val graph = graph7
 
     assertEquals(
-      Graph.predecessorsOf(graph, 1, 2).edges.toSeq,
+      graph.predecessorsOf(1, 2).edges.toSeq,
       Seq(1 -> 2)
     )
     assertEquals(
-      Graph.predecessorsOf(graph, 2, 3).edges.toSeq,
+      graph.predecessorsOf(2, 3).edges.toSeq,
       Seq(1 -> 3, 1 -> 2, 2 -> 3)
     )
     assertEquals(
-      Graph.predecessorsOf(graph, 3, 4).edges.toSeq,
+      graph.predecessorsOf(3, 4).edges.toSeq,
       Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4)
     )
     assertEquals(
-      Graph.predecessorsOf(graph, 4, 5).edges.toSeq,
+      graph.predecessorsOf(4, 5).edges.toSeq,
       Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5)
     )
     assertEquals(
-      Graph.predecessorsOf(graph, 5, 6).edges.toSeq,
+      graph.predecessorsOf(5, 6).edges.toSeq,
       Seq(5 -> 7, 5 -> 6, 6 -> 7, 7 -> 5)
     )
     assertEquals(
-      Graph.predecessorsOf(graph, 6, 7).edges.toSeq,
+      graph.predecessorsOf(6, 7).edges.toSeq,
       Seq(5 -> 7, 5 -> 6, 6 -> 7, 7 -> 5)
     )
     assertEquals(
-      Graph.predecessorsOf(graph, 7, 8).edges.toSeq,
+      graph.predecessorsOf(7, 8).edges.toSeq,
       Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5)
     )
     assertEquals(
-      Graph.predecessorsOf(graph, 8, 9).edges.toSeq,
+      graph.predecessorsOf(8, 9).edges.toSeq,
       Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8)
     )
     assertEquals(
-      Graph.predecessorsOf(graph, 9, 10).edges.toSeq,
+      graph.predecessorsOf(9, 10).edges.toSeq,
       Seq(9 -> 10)
     )
     assertEquals(
-      Graph.predecessorsOf(graph, 10, 11).edges.toSeq,
+      graph.predecessorsOf(10, 11).edges.toSeq,
       Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11, 9 -> 10)
     )
     assertEquals(
-      Graph.predecessorsOf(graph, 11, 1).edges.toSeq,
+      graph.predecessorsOf(11, 1).edges.toSeq,
       Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
     )
   }
@@ -459,47 +456,47 @@ class GraphSpec extends munit.FunSuite {
     val graph = graph7
 
     assertEquals(
-      Graph.predecessorsAndSuccessorsOf(graph, 1).edges.toSeq,
+      graph.predecessorsAndSuccessorsOf(1).edges.toSeq,
       Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
     )
     assertEquals(
-      Graph.predecessorsAndSuccessorsOf(graph, 2).edges.toSeq,
+      graph.predecessorsAndSuccessorsOf(2).edges.toSeq,
       Seq(1 -> 2, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
     )
     assertEquals(
-      Graph.predecessorsAndSuccessorsOf(graph, 3).edges.toSeq,
+      graph.predecessorsAndSuccessorsOf(3).edges.toSeq,
       Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
     )
     assertEquals(
-      Graph.predecessorsAndSuccessorsOf(graph, 4).edges.toSeq,
+      graph.predecessorsAndSuccessorsOf(4).edges.toSeq,
       Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 4 -> 8, 8 -> 11)
     )
     assertEquals(
-      Graph.predecessorsAndSuccessorsOf(graph, 5).edges.toSeq,
+      graph.predecessorsAndSuccessorsOf(5).edges.toSeq,
       Seq(5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5)
     )
     assertEquals(
-      Graph.predecessorsAndSuccessorsOf(graph, 6).edges.toSeq,
+      graph.predecessorsAndSuccessorsOf(6).edges.toSeq,
       Seq(5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5)
     )
     assertEquals(
-      Graph.predecessorsAndSuccessorsOf(graph, 7).edges.toSeq,
+      graph.predecessorsAndSuccessorsOf(7).edges.toSeq,
       Seq(5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5)
     )
     assertEquals(
-      Graph.predecessorsAndSuccessorsOf(graph, 8).edges.toSeq,
+      graph.predecessorsAndSuccessorsOf(8).edges.toSeq,
       Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
     )
     assertEquals(
-      Graph.predecessorsAndSuccessorsOf(graph, 9).edges.toSeq,
+      graph.predecessorsAndSuccessorsOf(9).edges.toSeq,
       Seq(9 -> 10)
     )
     assertEquals(
-      Graph.predecessorsAndSuccessorsOf(graph, 10).edges.toSeq,
+      graph.predecessorsAndSuccessorsOf(10).edges.toSeq,
       Seq(9 -> 10)
     )
     assertEquals(
-      Graph.predecessorsAndSuccessorsOf(graph, 11).edges.toSeq,
+      graph.predecessorsAndSuccessorsOf(11).edges.toSeq,
       Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
     )
   }
@@ -508,47 +505,47 @@ class GraphSpec extends munit.FunSuite {
     val graph = graph7
 
     assertEquals(
-      Graph.predecessorsAndSuccessorsOf(graph, 1, 2).edges.toSeq,
+      graph.predecessorsAndSuccessorsOf(1, 2).edges.toSeq,
       Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
     )
     assertEquals(
-      Graph.predecessorsAndSuccessorsOf(graph, 2, 3).edges.toSeq,
+      graph.predecessorsAndSuccessorsOf(2, 3).edges.toSeq,
       Seq(1 -> 3, 1 -> 2, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
     )
     assertEquals(
-      Graph.predecessorsAndSuccessorsOf(graph, 3, 4).edges.toSeq,
+      graph.predecessorsAndSuccessorsOf(3, 4).edges.toSeq,
       Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
     )
     assertEquals(
-      Graph.predecessorsAndSuccessorsOf(graph, 4, 5).edges.toSeq,
+      graph.predecessorsAndSuccessorsOf(4, 5).edges.toSeq,
       Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 4 -> 8, 5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5, 8 -> 11)
     )
     assertEquals(
-      Graph.predecessorsAndSuccessorsOf(graph, 5, 6).edges.toSeq,
+      graph.predecessorsAndSuccessorsOf(5, 6).edges.toSeq,
       Seq(5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5)
     )
     assertEquals(
-      Graph.predecessorsAndSuccessorsOf(graph, 6, 7).edges.toSeq,
+      graph.predecessorsAndSuccessorsOf(6, 7).edges.toSeq,
       Seq(5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5)
     )
     assertEquals(
-      Graph.predecessorsAndSuccessorsOf(graph, 7, 8).edges.toSeq,
+      graph.predecessorsAndSuccessorsOf(7, 8).edges.toSeq,
       Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 5 -> 6, 5 -> 7, 6 -> 7, 7 -> 5, 8 -> 11)
     )
     assertEquals(
-      Graph.predecessorsAndSuccessorsOf(graph, 8, 9).edges.toSeq,
+      graph.predecessorsAndSuccessorsOf(8, 9).edges.toSeq,
       Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11, 9 -> 10)
     )
     assertEquals(
-      Graph.predecessorsAndSuccessorsOf(graph, 9, 10).edges.toSeq,
+      graph.predecessorsAndSuccessorsOf(9, 10).edges.toSeq,
       Seq(9 -> 10)
     )
     assertEquals(
-      Graph.predecessorsAndSuccessorsOf(graph, 10, 11).edges.toSeq,
+      graph.predecessorsAndSuccessorsOf(10, 11).edges.toSeq,
       Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11, 9 -> 10)
     )
     assertEquals(
-      Graph.predecessorsAndSuccessorsOf(graph, 11).edges.toSeq,
+      graph.predecessorsAndSuccessorsOf(11).edges.toSeq,
       Seq(1 -> 2, 1 -> 3, 2 -> 3, 3 -> 4, 3 -> 8, 4 -> 8, 8 -> 11)
     )
   }

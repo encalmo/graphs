@@ -1,10 +1,10 @@
 #!/usr/bin/env -S scala-cli shebang --quiet
 
-//> using scala 3.4.1
+//> using scala 3.5.2
 //> using jvm 21
-//> using toolkit default
-import java.nio.file.Path
+//> using toolkit 0.6.0
 
+import java.nio.file.Path
 import scala.io.AnsiColor.*
 
 val organization = getArg("organization")
