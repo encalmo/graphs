@@ -1,6 +1,6 @@
 //> using scala 3.5.2
 //> using jvm 21
-//> using dep org.scalameta::munit:1.0.2
+//> using dep org.scalameta::munit:1.1.0
 //> using option -Xmax-inlines 128
 //> using test.resourceDir ./test-resources
 //> using publish.organization "org.encalmo"

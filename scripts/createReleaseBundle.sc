@@ -10,7 +10,7 @@ import scala.io.AnsiColor.*
 val organization = getArg("organization")
 val name = getArg("name")
 val version = getArg("version")
-val secretKeyPassword = getArg("secret-key-password")
+val secretKeyPassword = maybeArg("secret-key-password")
 val maybeGpgKey = maybeArg("gpg-key")
 val maybeSecretKey = maybeArg("secret-key")
 
@@ -18,8 +18,11 @@ val signer = maybeGpgKey match {
   case Some(key) => s"""--signer gpg --gpg-key $key"""
   case None =>
     maybeSecretKey match {
-      case Some(key) => s"""--signer bc --secret-key $key"""
-      case None      => ""
+      case Some(key) =>
+        s"""--signer bc --secret-key $key${secretKeyPassword
+            .map(value => s" --secret-key-password value:$value")
+            .getOrElse("")}"""
+      case None => ""
     }
 
 }
@@ -31,7 +34,7 @@ call(s"scala-cli test .").foreach(println)
 println(s"${GREEN}publishing package locally ...${RESET}")
 
 val command =
-  s"""scala-cli publish local . --organization $organization --name $name --project-version $version --secret-key-password value:${secretKeyPassword} $signer"""
+  s"""scala-cli publish local . --organization $organization --name $name --project-version $version $signer"""
 
 val (publishedFolder, coordinates) = {
   val ivyLocation = call(command).last.trim()
