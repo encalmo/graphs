@@ -29,7 +29,7 @@ val signer = maybeGpgKey match {
 
 println(s"${GREEN}running tests ...${RESET}")
 
-call(s"scala-cli test .").foreach(println)
+call(s"scala-cli --power test .").foreach(println)
 
 println(s"${GREEN}publishing package locally ...${RESET}")
 
