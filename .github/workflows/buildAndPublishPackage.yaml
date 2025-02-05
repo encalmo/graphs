@@ -17,8 +17,6 @@ on:
         required: true 
       GPG_SECRET_KEY:
         required: true 
-      GPG_SECRET_KEY_PASSWORD:
-        required: true 
 
 permissions:
   id-token: write # This is required for requesting the JWT
