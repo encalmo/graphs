@@ -34,7 +34,7 @@ call(s"scala-cli test .").foreach(println)
 println(s"${GREEN}publishing package locally ...${RESET}")
 
 val command =
-  s"""scala-cli publish local . --organization $organization --name $name --project-version $version $signer"""
+  s"""scala-cli --power publish local . --organization $organization --name $name --project-version $version $signer"""
 
 val (publishedFolder, coordinates) = {
   val ivyLocation = call(command).last.trim()
