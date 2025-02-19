@@ -54,7 +54,7 @@ jobs:
           --verbose \
           --header 'Authorization: Bearer ${{ secrets.SONATYPE_TOKEN }}' \
           --form bundle=@bundle.zip \
-          https://central.sonatype.com/api/v1/publisher/upload
+          https://central.sonatype.com/api/v1/publisher/upload?publishingType=AUTOMATIC&name=${{ env.TAG_PREFIX }}-${{ steps.version.outputs.new_version }}
       - name: Push tag
         id: tag_version
         uses: mathieudutour/github-tag-action@v6.1
