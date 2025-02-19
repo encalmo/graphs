@@ -2,13 +2,11 @@
 
 //> using scala 3.5.2
 //> using jvm 21
-//> using toolkit 0.6.0
+//> using toolkit 0.7.0
 
 import java.nio.file.Path
 import scala.io.AnsiColor.*
 
-val organization = getArg("organization")
-val name = getArg("name")
 val version = getArg("version")
 val secretKeyPassword = maybeArg("secret-key-password")
 val maybeGpgKey = maybeArg("gpg-key")
@@ -27,14 +25,43 @@ val signer = maybeGpgKey match {
 
 }
 
-println(s"${GREEN}running tests ...${RESET}")
+val usingDirectiveRegex = """\/\/\>\s+using\s+(.+)\s+(.+)""".r
 
-call(s"scala-cli --power test .").foreach(println)
+val (name, organization) = {
+  val config =
+    os
+      .read(os.pwd / "project.scala")
+      .linesIterator
+      .map {
+        case usingDirectiveRegex(name, value) => Some((name, value))
+        case _                                => None
+      }
+      .collect { case Some(x) => x }
+      .toMap
+  {
+    for {
+      name <- config.get("publish.name").map(_.stripPrefix("\"").stripSuffix("\""))
+      organization <- config.get("publish.organization").map(_.stripPrefix("\"").stripSuffix("\""))
+    } yield (name, organization)
+  }.getOrElse(
+    throw new Exception("File project.scala should contain publish.name and publish.organization directives")
+  )
+}
 
-println(s"${GREEN}publishing package locally ...${RESET}")
+println(s"${GREEN}Found config publish.name=$name publish.organization=$organization${RESET}")
+
+println(s"${GREEN}Running tests ...${RESET}")
+
+call(
+  s"scala-cli --power test . --suppress-deprecated-warnings --suppress-experimental-feature-warning --suppress-directives-in-multiple-files-warning --suppress-deprecated-feature-warning"
+).foreach(
+  println
+)
+
+println(s"${GREEN}Publishing package locally ...${RESET}")
 
 val command =
-  s"""scala-cli --power publish local . --organization $organization --name $name --project-version $version $signer"""
+  s"""scala-cli --power publish local . --organization $organization --name $name --project-version $version $signer --suppress-deprecated-warnings --suppress-experimental-feature-warning --suppress-directives-in-multiple-files-warning --suppress-deprecated-feature-warning"""
 
 val (publishedFolder, coordinates) = {
   val ivyLocation = call(command).last.trim()
@@ -51,20 +78,20 @@ val (publishedFolder, coordinates) = {
 
 val artefactName = coordinates.dropRight(1).last
 
-println(s"${GREEN}published ${coordinates.mkString(":")} to $publishedFolder${RESET}")
+println(s"${GREEN}Published ${coordinates.mkString(":")} to $publishedFolder${RESET}")
 
 val tempDir = os.temp.dir(prefix = s"sonatype-deployment-package-")
 val bundleFolderPath = tempDir / toFolderPath(coordinates)
 os.makeDir.all(bundleFolderPath)
 
-println(s"${GREEN}preparing sonatype bundle in ${bundleFolderPath} ...${RESET}")
+println(s"${GREEN}Preparing sonatype bundle in ${bundleFolderPath} ...${RESET}")
 
 copyPublishedFiles("poms")
 copyPublishedFiles("jars")
 copyPublishedFiles("srcs")
 copyPublishedFiles("docs")
 
-println(s"${GREEN}creating bundle archive ...${RESET}")
+println(s"${GREEN}Creating bundle archive ...${RESET}")
 val bundleArchivePath = tempDir / "bundle.zip"
 call(s"zip -r bundle.zip ${bundleFolderPath.relativeTo(tempDir)}", cwd = tempDir).foreach(println)
 call(s"ls -l $bundleArchivePath").foreach(println)

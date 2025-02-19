@@ -7,7 +7,7 @@
 
 //> using scala 3.5.2
 //> using jvm 21
-//> using toolkit 0.6.0
+//> using toolkit 0.7.0
 
 val tagPrefix = getArg("--prefix", "v")
 val bumpMethod = getArg("--bump", "major")
