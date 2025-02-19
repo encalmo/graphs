@@ -91,10 +91,14 @@ copyPublishedFiles("jars")
 copyPublishedFiles("srcs")
 copyPublishedFiles("docs")
 
+val bundleFilePath = os.pwd / "bundle.zip"
+
 println(s"${GREEN}Creating bundle archive ...${RESET}")
 val bundleArchivePath = tempDir / "bundle.zip"
 call(s"zip -r bundle.zip ${bundleFolderPath.relativeTo(tempDir)}", cwd = tempDir).foreach(println)
 call(s"ls -l $bundleArchivePath").foreach(println)
+call(s"mv bundle.zip $bundleFilePath", cwd = tempDir).foreach(println)
+println(s"${GREEN}Bundle archive ready at $bundleFilePath${RESET}")
 
 // ---------- UTILS ----------
 
