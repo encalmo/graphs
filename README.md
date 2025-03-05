@@ -1,3 +1,5 @@
+![Maven Central Version](https://img.shields.io/maven-central/v/org.encalmo/graphs_3?style=for-the-badge)
+
 # graphs
 Scala library for processing graphs.
 
