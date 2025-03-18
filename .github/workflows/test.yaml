@@ -3,6 +3,8 @@ name: Test
 on:
   workflow_dispatch:  
   push:
+    paths:
+      - '*.scala' 
 
 permissions:
   id-token: write # This is required for requesting the JWT

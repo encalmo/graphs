@@ -16,7 +16,12 @@ on:
   # push:
   #   branches: [main]
   #   paths:
-  #     - '*.scala'        
+  #     - '*.scala'   
+  
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: write # This is required for actions/checkout
+  pages: write    # to deploy to Pages
 
 jobs:
   ReleasePackage:
@@ -24,12 +29,15 @@ jobs:
     steps:
       - id: release
         name: Create and upload new release bundles
-        uses: encalmo/create-new-release-action@v1.3.1
+        uses: encalmo/create-new-release-action@v1.4.3
         with:
-          tag-prefix: 'graphs'
+          tag-prefix: 'version'
           version-bump: ${{ inputs.version-bump || 'patch' }}
           release-flags: '--native --js'
           github-token:  ${{ secrets.GITHUB_TOKEN }}
           sonatype-token: ${{ secrets.SONATYPE_TOKEN }}
           gpg-secret-key-base64: ${{ secrets.GPG_SECRET_KEY }}
           gpg-secret-key-id: ${{ secrets.GPG_SECRET_KEY_ID }}
+          pages-only: 'false'
+          markdown-paths: 'README.md'
+          
