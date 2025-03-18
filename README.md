@@ -10,3 +10,7 @@ Use with SBT
 or with SCALA-CLI
 
     //> using dep org.encalmo::graphs:0.9.3
+
+
+   - JVM >= 21
+   - [Scala](https://www.scala-lang.org/) >= 3.5.2
