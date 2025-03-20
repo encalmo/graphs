@@ -21,7 +21,7 @@ jobs:
         name: Create and upload new Github Pages content
         uses: encalmo/create-new-release-action@v1.4.3
         with:
-          tag-prefix: 'version'
+          tag-prefix: 'graphs'
           version-bump: 'keep'
           release-flags: ''
           github-token:  ${{ secrets.GITHUB_TOKEN }}
