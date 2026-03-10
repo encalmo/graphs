@@ -7,6 +7,21 @@ Scala library for processing graphs.
 ## Table of contents
 
 - [Motivation](#motivation)
+- [Supported Graph Algorithms](#supported-graph-algorithms)
+- [Creating a Graph](#creating-a-graph)
+   - [Unweighted Graphs](#unweighted-graphs)
+   - [Weighted Graphs](#weighted-graphs)
+   - [Loading Graphs from Files](#loading-graphs-from-files)
+   - [Mutating a Graph](#mutating-a-graph)
+   - [Computing Properties of a Graph](#computing-properties-of-a-graph)
+      - [Nodes and Edges](#nodes-and-edges)
+   - [Predecessors and Ancestors](#predecessors-and-ancestors)
+      - [Traversal: BFS and DFS](#traversal:-bfs-and-dfs)
+      - [Cycle Detection](#cycle-detection)
+      - [Topological Sorting](#topological-sorting)
+      - [Strongly Connected Components (SCCs)](#strongly-connected-components-(sccs))
+      - [Shortest Paths (Dijkstra)](#shortest-paths-(dijkstra))
+      - [Adjacency and Neighbors](#adjacency-and-neighbors)
 - [Dependencies](#dependencies)
 - [Usage](#usage)
 - [Project content](#project-content)
@@ -218,7 +233,7 @@ val weight = weightedGraph.weight(1, 3)        // Edge weight between 1 and 3
 ## Dependencies
 
    - JVM >= 21
-   - [Scala](https://www.scala-lang.org) >= 3.5.2
+   - [Scala](https://www.scala-lang.org) >= 3.7.4
 
 ## Usage
 
