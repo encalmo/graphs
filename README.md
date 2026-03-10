@@ -13,7 +13,7 @@ Scala library for processing graphs.
    - [Loading Graphs from Files](#loading-graphs-from-files)
    - [Mutating a Graph](#mutating-a-graph)
 - [Computing Properties of a Graph](#computing-properties-of-a-graph)
-      - [Nodes and Edges](#nodes-and-edges)
+   - [Nodes and Edges](#nodes-and-edges)
    - [Adjacency and Neighbors](#adjacency-and-neighbors)
    - [Predecessors and Ancestors](#predecessors-and-ancestors)
    - [Traversal: BFS and DFS](#traversal:-bfs-and-dfs)
@@ -240,7 +240,7 @@ Use with SBT
 
 or with SCALA-CLI
 
-    //> using dep org.encalmo::graphs:0.9.3
+    //> using dep org.encalmo::graphs:0.10.0
 
 ## Project content
 
