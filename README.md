@@ -9,19 +9,18 @@ Scala library for processing graphs.
 - [Motivation](#motivation)
 - [Supported Graph Algorithms](#supported-graph-algorithms)
 - [Creating a Graph](#creating-a-graph)
-   - [Unweighted Graphs](#unweighted-graphs)
    - [Weighted Graphs](#weighted-graphs)
    - [Loading Graphs from Files](#loading-graphs-from-files)
    - [Mutating a Graph](#mutating-a-graph)
-   - [Computing Properties of a Graph](#computing-properties-of-a-graph)
+- [Computing Properties of a Graph](#computing-properties-of-a-graph)
       - [Nodes and Edges](#nodes-and-edges)
+   - [Adjacency and Neighbors](#adjacency-and-neighbors)
    - [Predecessors and Ancestors](#predecessors-and-ancestors)
-      - [Traversal: BFS and DFS](#traversal:-bfs-and-dfs)
-      - [Cycle Detection](#cycle-detection)
-      - [Topological Sorting](#topological-sorting)
-      - [Strongly Connected Components (SCCs)](#strongly-connected-components-(sccs))
-      - [Shortest Paths (Dijkstra)](#shortest-paths-(dijkstra))
-      - [Adjacency and Neighbors](#adjacency-and-neighbors)
+   - [Traversal: BFS and DFS](#traversal:-bfs-and-dfs)
+   - [Cycle Detection](#cycle-detection)
+   - [Topological Sorting](#topological-sorting)
+   - [Strongly Connected Components (SCCs)](#strongly-connected-components-(sccs))
+   - [Shortest Paths (Dijkstra)](#shortest-paths-(dijkstra))
 - [Dependencies](#dependencies)
 - [Usage](#usage)
 - [Project content](#project-content)
@@ -241,7 +240,7 @@ Use with SBT
 
 or with SCALA-CLI
 
-    //> using dep org.encalmo::graphs:0.10.0
+    //> using dep org.encalmo::graphs:0.9.3
 
 ## Project content
 
