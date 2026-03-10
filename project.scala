@@ -1,7 +1,7 @@
-//> using scala 3.5.2
+//> using scala 3.7.4
 //> using exclude scripts
 //> using jvm 21
-//> using test.dep org.scalameta::munit:1.1.0
+//> using test.dep org.scalameta::munit:1.2.4
 //> using option -Xmax-inlines 128
 //> using test.resourceDir ./test-resources
 //> using publish.organization "org.encalmo"
