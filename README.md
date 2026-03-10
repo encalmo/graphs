@@ -243,7 +243,7 @@ Use with SBT
 
 or with SCALA-CLI
 
-    //> using dep org.encalmo::graphs:0.9.3
+    //> using dep org.encalmo::graphs:0.10.0
 
 ## Project content
 
