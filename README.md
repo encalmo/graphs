@@ -129,7 +129,7 @@ val immutableAgain = mutableGraph.freeze
 
 The `Graph` API provides various methods to compute important properties and perform common graph algorithms:
 
-#### Nodes and Edges
+### Nodes and Edges
 
 Basic properties to introspect the structure of any graph:
 
