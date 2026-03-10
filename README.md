@@ -47,8 +47,6 @@ The library implements several essential graph algorithms out of the box. These 
 
 You can create graphs using the `Graph` companion object's `apply` methods. These support both unweighted (default) and weighted graphs, with intuitive syntax.
 
-### Unweighted Graphs
-
 A directed graph can be built by specifying each node and the sequence of its outgoing neighbors as key-value pairs:
 
 ```scala
@@ -128,7 +126,7 @@ val immutableAgain = mutableGraph.freeze
 
 **Note:** Mutating shared immutable graphs will not alter the original graph. Mutations only affect the mutable copy.
 
-### Computing Properties of a Graph
+## Computing Properties of a Graph
 
 The `Graph` API provides various methods to compute important properties and perform common graph algorithms:
 
@@ -147,6 +145,15 @@ val edgeList = g.edges                       // Iterable[(N, N)]
 // Check existence
 val hasNode = g.containsNode(2)              // Boolean
 val hasEdge = g.containsEdge(1, 3)           // Boolean
+```
+
+### Adjacency and Neighbors
+
+Query neighboring nodes and edge weights:
+
+```scala
+val neighbors = g.adjacent(1)                  // Iterable[N]
+val weight = weightedGraph.weight(1, 3)        // Edge weight between 1 and 3
 ```
 
 ### Predecessors and Ancestors
@@ -169,7 +176,7 @@ val g = Graph(1 -> Seq(2, 3), 2 -> Seq(3), 3 -> Seq())
 
 These are useful for dependency analysis, reachability, and more.
 
-#### Traversal: BFS and DFS
+### Traversal: BFS and DFS
 
 Traverse graphs with breadth-first or depth-first strategies:
 
@@ -183,7 +190,7 @@ Graph.dfs(g)(new Graph.DfsVisitor[Int] {
 Graph.bfs(g) { node => println(s"BFS visits $node") }
 ```
 
-#### Cycle Detection
+### Cycle Detection
 
 Detect cycles and retrieve cyclic nodes:
 
@@ -192,7 +199,7 @@ val hasCycles = Graph.hasCycles(g2)          // returns true/false
 val cycles = Graph.findCycles(g2)            // Returns Vector[N] of nodes in cycles
 ```
 
-#### Topological Sorting
+### Topological Sorting
 
 For directed acyclic graphs (DAGs), you can obtain a valid topological ordering:
 
@@ -200,7 +207,7 @@ For directed acyclic graphs (DAGs), you can obtain a valid topological ordering:
 val order = Graph.sortTopologically(g3)      // Returns List[N], in topological order
 ```
 
-#### Strongly Connected Components (SCCs)
+### Strongly Connected Components (SCCs)
 
 Identify SCCs in directed graphs:
 
@@ -208,7 +215,7 @@ Identify SCCs in directed graphs:
 val sccs = Graph.findStronglyConnectedComponents(g2) // Vector[Set[N]]
 ```
 
-#### Shortest Paths (Dijkstra)
+### Shortest Paths (Dijkstra)
 
 For weighted graphs (with positive weights), compute shortest paths:
 
@@ -219,15 +226,6 @@ val (distance, path) = weightedGraph.findShortestPath(1, 5)
 
 val allDistances = weightedGraph.findShortestPaths(1)
 // allDistances: Map[N, Int]
-```
-
-#### Adjacency and Neighbors
-
-Query neighboring nodes and edge weights:
-
-```scala
-val neighbors = g.adjacent(1)                  // Iterable[N]
-val weight = weightedGraph.weight(1, 3)        // Edge weight between 1 and 3
 ```
 
 ## Dependencies
