@@ -21,6 +21,8 @@ or with SCALA-CLI
 
 ## Table of contents
 
+- [Dependencies](#dependencies)
+- [Usage](#usage)
 - [Motivation](#motivation)
 - [Supported Graph Algorithms](#supported-graph-algorithms)
 - [Creating a Graph](#creating-a-graph)
@@ -36,8 +38,10 @@ or with SCALA-CLI
    - [Topological Sorting](#topological-sorting)
    - [Strongly Connected Components (SCCs)](#strongly-connected-components-(sccs))
    - [Shortest Paths (Dijkstra)](#shortest-paths-(dijkstra))
-- [Dependencies](#dependencies)
-- [Usage](#usage)
+- [Mermaid graph](#mermaid-graph)
+      - [Simple Usage](#simple-usage)
+      - [Advanced: Node Classes and Custom Edge Types](#advanced:-node-classes-and-custom-edge-types)
+- [Mermaid State Diagram Support](#mermaid-state-diagram-support)
 - [Project content](#project-content)
 
 ## Motivation
@@ -353,6 +357,8 @@ This project also supports generating Mermaid state diagrams (stateDiagram-v2) f
 ├── Heap.test.scala
 ├── IntTraversable.scala
 ├── LICENSE
+├── Mermaid.scala
+├── Mermaid.test.scala
 ├── project.scala
 ├── QuickSort.scala
 ├── README.md
