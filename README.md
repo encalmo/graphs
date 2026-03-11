@@ -174,6 +174,22 @@ val neighbors = g.adjacent(1)                  // Iterable[N]
 val weight = weightedGraph.weight(1, 3)        // Edge weight between 1 and 3
 ```
 
+### Roots and Leaves
+
+You can easily obtain the roots (nodes with no predecessors, i.e., no incoming edges) and leaves (nodes with no outgoing edges) of a graph. These are helpful, for example, to identify entry points or terminal nodes in dependency graphs and workflows:
+
+```scala
+val g = Graph(1 -> Seq(2, 3), 2 -> Seq(3), 3 -> Seq())
+// Find root nodes (no incoming edges)
+val roots = Graph.rootsOf(g)      // Returns Set(1)
+
+// Find leaf nodes (no outgoing edges)
+val leaves = Graph.leavesOf(g)    // Returns Set(3)
+```
+
+- In the example above, node 1 is a root because it has no incoming edges.
+- Node 3 is a leaf because it has no outgoing edges.
+
 ### Predecessors and Ancestors
 
 You can compute the predecessors (nodes with edges into a given node) and ancestors (all nodes from which you can reach a given node via a path) of a node:
@@ -246,18 +262,18 @@ val allDistances = weightedGraph.findShortestPaths(1)
 // allDistances: Map[N, Int]
 ```
 
-## Mermaid graph
+## Mermaid diagrams
 
 The library provides utilities for rendering graphs in [Mermaid](https://mermaid-js.github.io/) syntax for easy visualization in Markdown files, documentation, and compatible tools.
 
-#### Simple Usage
+#### Simple graph diagram
 
 You can generate a Mermaid representation of a `Graph` using the `Mermaid.render` method:
 
 ```scala
 val g = Graph(1 -> Seq(2, 3), 2 -> Seq(3), 3 -> Seq(4), 4 -> Seq(2))
 val mermaid =
-  Mermaid.render(g, Mermaid.GraphDirection.LeftToRight)
+  Mermaid.renderGraph(g, Mermaid.Direction.LeftToRight)
 
 println(mermaid)
 ```
@@ -277,7 +293,7 @@ graph LR
 4-->2
 ```
 
-#### Advanced: Node Classes and Custom Edge Types
+#### Graph diagram with clases and edge types
 
 You can further customize node styles and edge types using an extended version of `Mermaid.render`:
 
@@ -291,7 +307,7 @@ val g = Graph[Node](
   "b" -> Seq(1, "a"),
   "c" -> Seq("b", 2)
 )
-val mermaid = Mermaid.render(
+val mermaid = Mermaid.renderGraph(
   g,
   classDef = {
     case "int"    => "fill:#2058FF,stroke:#2058FF,color:#fff"
@@ -307,7 +323,7 @@ val mermaid = Mermaid.render(
     case (_: Int, _: String)    => "-->"
     case (_: String, _: Int)    => "-.->"
   },
-  direction = Mermaid.GraphDirection.TopToBottom
+  direction = Mermaid.Direction.TopToBottom
 )
 
 println(mermaid)
@@ -336,9 +352,87 @@ c-.->2
 4-->c
 ```
 
-## Mermaid State Diagram Support
+#### Simple state diagram
 
-This project also supports generating Mermaid state diagrams (stateDiagram-v2) from arbitrary graphs. You can render both simple state diagrams and ones with custom node classes, styles, and directions. The interface allows specifying starting and ending nodes, class definitions, functions to determine a node's class, and the layout direction. This makes it easy to visualize state transitions and processes using Mermaid's syntax for state diagrams.
+The `Mermaid` utility also supports rendering [state diagrams](https://mermaid.js.org/syntax/stateDiagram.html) in Mermaid syntax using its `renderStateDiagramV2` methods.
+
+You can render a simple state diagram by providing a directed graph, starts and ends will be derived from graph's rootes and leaves:
+
+```scala
+val g = Graph[Int](
+  1 -> Seq(3, 4),
+  2 -> Seq(3),
+  3 -> Seq(4),
+  4 -> Seq(3, 5),
+  5 -> Seq()
+)
+val mermaid = Mermaid.renderStateDiagramV2(g)
+println(mermaid)
+```
+
+**Output:**
+
+```mermaid
+stateDiagram-v2
+    direction TB
+    [*] --> 1
+    [*] --> 2
+    1 --> 3
+    1 --> 4
+    2 --> 3
+    3 --> 4
+    4 --> 3
+    4 --> 5
+    5 --> [*]
+```
+
+#### State diagram with classes
+
+You can render a state diagram with custom start/end nodes and style classes. For example:
+
+```scala
+val graph = Graph[Int](
+  1 -> Seq(3, 4),
+  2 -> Seq(3),
+  3 -> Seq(4),
+  4 -> Seq(3, 5),
+  5 -> Seq()
+)
+val mermaid = Mermaid.renderStateDiagramV2(
+  graph,
+  starts = Seq(1, 2),
+  ends = Seq(5),
+  classDefs = Map(
+    "foo" -> "fill:#2058FF,stroke:#2058FF,color:#fff",
+    "bar" -> "fill:#FF00BF,stroke:#FF00BF,color:#fff"
+  ),
+  nodeClass = {
+    case 1 | 2 | 5 => "foo"
+    case 3 | 4     => "bar"
+  },
+  direction = Mermaid.Direction.LeftToRight
+)
+println(mermaid)
+```
+
+**Output:**
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    classDef foo fill:#2058FF,stroke:#2058FF,color:#fff
+    classDef bar fill:#FF00BF,stroke:#FF00BF,color:#fff
+    [*] --> 1:::foo
+    [*] --> 2:::foo
+    1:::foo --> 3:::bar
+    1:::foo --> 4:::bar
+    2:::foo --> 3:::bar
+    3:::bar --> 4:::bar
+    4:::bar --> 3:::bar
+    4:::bar --> 5:::foo
+    5:::foo --> [*]
+```
+
 
 ## Project content
 
