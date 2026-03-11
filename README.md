@@ -17,7 +17,7 @@ Use with SBT
 
 or with SCALA-CLI
 
-    //> using dep org.encalmo::graphs:0.10.0
+    //> using dep org.encalmo::graphs:0.11.0
 
 ## Table of contents
 
