@@ -4,6 +4,21 @@
 
 Scala library for processing graphs.
 
+## Dependencies
+
+   - JVM >= 21
+   - [Scala](https://www.scala-lang.org) >= 3.7.4
+
+## Usage
+
+Use with SBT
+
+    libraryDependencies += "org.encalmo" % "graphs_3" % "0.9.3"
+
+or with SCALA-CLI
+
+    //> using dep org.encalmo::graphs:0.10.0
+
 ## Table of contents
 
 - [Motivation](#motivation)
@@ -227,20 +242,99 @@ val allDistances = weightedGraph.findShortestPaths(1)
 // allDistances: Map[N, Int]
 ```
 
-## Dependencies
+## Mermaid graph
 
-   - JVM >= 21
-   - [Scala](https://www.scala-lang.org) >= 3.7.4
+The library provides utilities for rendering graphs in [Mermaid](https://mermaid-js.github.io/) syntax for easy visualization in Markdown files, documentation, and compatible tools.
 
-## Usage
+#### Simple Usage
 
-Use with SBT
+You can generate a Mermaid representation of a `Graph` using the `Mermaid.render` method:
 
-    libraryDependencies += "org.encalmo" % "graphs_3" % "0.9.3"
+```scala
+val g = Graph(1 -> Seq(2, 3), 2 -> Seq(3), 3 -> Seq(4), 4 -> Seq(2))
+val mermaid =
+  Mermaid.render(g, Mermaid.GraphDirection.LeftToRight)
 
-or with SCALA-CLI
+println(mermaid)
+```
 
-    //> using dep org.encalmo::graphs:0.10.0
+This prints:
+
+```mermaid
+graph LR
+1
+2
+3
+4
+1-->2
+1-->3
+2-->3
+3-->4
+4-->2
+```
+
+#### Advanced: Node Classes and Custom Edge Types
+
+You can further customize node styles and edge types using an extended version of `Mermaid.render`:
+
+```scala
+type Node = Int | String
+val g = Graph[Node](
+  1   -> Seq(2, 3),
+  2   -> Seq(3),
+  4   -> Seq("c"),
+  "a" -> Seq(4),
+  "b" -> Seq(1, "a"),
+  "c" -> Seq("b", 2)
+)
+val mermaid = Mermaid.render(
+  g,
+  classDef = {
+    case "int"    => "fill:#2058FF,stroke:#2058FF,color:#fff"
+    case "string" => "fill:#FF00BF,stroke:#FF00BF,color:#fff"
+  },
+  nodeClass = {
+    case n: Int    => "int"
+    case n: String => "string"
+  },
+  edgeType = {
+    case (_: Int, _: Int)       => "-->"
+    case (_: String, _: String) => "==>"
+    case (_: Int, _: String)    => "-->"
+    case (_: String, _: Int)    => "-.->"
+  },
+  direction = Mermaid.GraphDirection.TopToBottom
+)
+
+println(mermaid)
+```
+
+Example output:
+
+```mermaid
+graph TB
+classDef int fill:#2058FF,stroke:#2058FF,color:#fff
+classDef string fill:#FF00BF,stroke:#FF00BF,color:#fff
+1:::int
+a:::string
+2:::int
+b:::string
+c:::string
+4:::int
+1-->2
+1-->3
+a-.->4
+2-->3
+b-.->1
+b==>a
+c==>b
+c-.->2
+4-->c
+```
+
+## Mermaid State Diagram Support
+
+This project also supports generating Mermaid state diagrams (stateDiagram-v2) from arbitrary graphs. You can render both simple state diagrams and ones with custom node classes, styles, and directions. The interface allows specifying starting and ending nodes, class definitions, functions to determine a node's class, and the layout direction. This makes it easy to visualize state transitions and processes using Mermaid's syntax for state diagrams.
 
 ## Project content
 

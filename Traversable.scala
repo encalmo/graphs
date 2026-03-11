@@ -183,6 +183,46 @@ trait Traversable[N] {
     b.toString()
   }
 
+  def mkString(separator: String): String = {
+    val b = new StringBuilder()
+    var isNext = false
+    foreach { n =>
+      if (isNext)
+      then b.append(separator)
+      else isNext = true
+      b.append(n.toString())
+    }
+    b.toString()
+  }
+
+  def mkString(start: String, separator: String, end: String): String = {
+    val b = new StringBuilder()
+    var isNext = false
+    foreach { n =>
+      if (isNext)
+      then b.append(separator)
+      else {
+        b.append(start)
+        isNext = true
+      }
+      b.append(n.toString())
+    }
+    if (isNext) then b.append(end)
+    b.toString()
+  }
+
+  def distinct: Traversable[N] = {
+    val seen = collection.mutable.Set.empty[N]
+    Traversable { f =>
+      foreach { n =>
+        if (!seen(n)) then {
+          seen.add(n)
+          f(n)
+        }
+      }
+    }
+  }
+
   def get(index: Int): N =
     boundary {
       if (index < 0) throw new IndexOutOfBoundsException()
