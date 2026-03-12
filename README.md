@@ -13,11 +13,11 @@ Scala library for processing graphs.
 
 Use with SBT
 
-    libraryDependencies += "org.encalmo" %% "graphs" % "0.12.0"
+    libraryDependencies += "org.encalmo" %% "graphs" % "0.11.0"
 
 or with SCALA-CLI
 
-    //> using dep org.encalmo::graphs:0.12.0
+    //> using dep org.encalmo::graphs:0.11.0
 
 ## Table of contents
 
@@ -25,6 +25,10 @@ or with SCALA-CLI
 - [Usage](#usage)
 - [Motivation](#motivation)
 - [Supported Graph Algorithms](#supported-graph-algorithms)
+- [Graph[N] is an interface, not a concrete structure](#graph[n]-is-an-interface,-not-a-concrete-structure)
+   - [Providing Custom `Graph[N]` Implementations](#providing-custom-`graph[n]`-implementations)
+      - [Wrapping Existing Data Structures](#wrapping-existing-data-structures)
+      - [Custom Class Hierarchies](#custom-class-hierarchies)
 - [Creating a Graph](#creating-a-graph)
       - [Weighted Graphs](#weighted-graphs)
    - [`Graph.apply` Methods](#`graph.apply`-methods)
