@@ -82,7 +82,7 @@ val g = Graph[Int](
 
 This creates a graph with edges 1→2, 1→3, 2→3, and 3→4.
 
-### Weighted Graphs
+#### Weighted Graphs
 
 For weighted graphs, provide pairs (neighbor, weight) for each outgoing edge:
 
@@ -95,6 +95,136 @@ val weighted = Graph[Int, Int](
 ```
 
 Here, the first type parameter is the node type, the second is the weight type.
+
+### `Graph.apply` Methods
+
+The library provides convenient `apply` methods to construct graphs in various ways:
+
+#### Constructing a Graph from a Map
+
+If you already have a `Map` whose keys are nodes and whose values are traversable collections of adjacent nodes, you can construct a `MapGraph` directly:
+
+```scala
+val nodeMap = Map(
+  1 -> Seq(2, 3),
+  2 -> Seq(3),
+  3 -> Seq(4),
+  4 -> Seq()
+)
+val g: MapGraph[Int] = Graph(nodeMap)
+```
+
+This method leverages the `Graph.apply[N](map: Map[N, Traversable[N]])` constructor and returns a `MapGraph[N]` instance that efficiently references your supplied adjacency structure.
+ 
+If the key type is `Int`, you’ll get a specialized performance-optimized `IntMapGraph` under the hood.
+ 
+This is particularly useful when reading from sources that already produce adjacency maps or when transforming data from other libraries.
+
+#### Constructing a Graph from series of (node, adjacent nodes) pairs
+
+You can also build a `MapGraph` directly from a series of node-to-adjacents pairs using varargs:
+
+```scala
+val g: MapGraph[Int] = Graph(
+  1 -> Seq(2, 3),
+  2 -> Seq(3, 4),
+  3 -> Seq(4),
+  4 -> Seq()
+)
+```
+
+This syntax is equivalent to passing a `Map` of adjacency lists, but lets you define the edges inline without explicitly assembling the map. The type of each entry is `(N, Traversable[N])`, so you can use any type for the adjacent nodes as long as it is traversable.
+
+This construction uses the method:
+```
+def apply[N](mappings: (N, Traversable[N])*): MapGraph[N]
+```
+and efficiently creates a new `MapGraph` (or `IntMapGraph` for integer keys). This approach is especially handy for building small static graphs or for quick, readable test cases.
+
+#### Constructing a Graph from a set of nodes and an adjacency function
+
+For scenarios where you have a collection of nodes (of type `Iterable[N]`) and a function to compute adjacent nodes for each node, you can construct a `GenericGraph` using:
+
+```scala
+val nodes: Iterable[Int] = List(1, 2, 3, 4)
+val adjacency: Int => Traversable[Int] = {
+  case 1 => Seq(2, 3)
+  case 2 => Seq(3)
+  case 3 => Seq(4)
+  case 4 => Seq()
+}
+
+val g: Graph[Int] = Graph(nodes, adjacency)
+```
+
+This approach is particularly useful when the set of nodes is known, and adjacency relationships are defined procedurally or computed on the fly, rather than derived from a static map or edge list. It is also ideal for dynamically generated graphs, programmatic or algorithmic relationships, and for interoperating with existing APIs/data sources that supply nodes and adjacency logic separately.
+
+The method signature is:
+```
+def apply[N](nodes: Iterable[N], adjacent: N => Traversable[N]): Graph[N]
+```
+The resulting graph exposes all standard `Graph` operations, and will call your `adjacent` function to determine the outgoing edges for each node in the provided `nodes` set.
+
+#### Constructing a Graph from a Sequence of Edges
+
+You can also construct a graph from a flat collection of edges, with each edge represented as a tuple `(from, to)`. This is especially useful when your data is already in edge-list format or when you want to build up a graph incrementally from a set of relationships.
+
+Example:
+
+```scala
+val edges = Seq(
+  (1, 2),
+  (1, 3),
+  (2, 3),
+  (3, 4)
+)
+val g: MutableMapGraph[Int] = Graph(edges)
+```
+
+This uses the following constructor:
+
+```
+def apply[N](edges: Traversable[(N, N)]): MutableMapGraph[N]
+```
+
+Each pair `(a, b)` in `edges` will create a directed edge from `a` to `b`. The resulting graph is mutable (`MutableMapGraph`), allowing you to add or remove nodes and edges after construction. This method is handy for loading data-driven graphs or parsing edge lists from files or output of other libraries.
+
+#### Constructing a Weighted Graph from Node-Weighted Adjacency Lists
+
+If you need to represent a graph where each edge carries an explicit weight (for example, for shortest path or flow algorithms), you can easily construct such a weighted graph with the following constructor:
+
+```scala
+val g: Graph[Int] & Weighted[Int, Double] = Graph(
+  1 -> Iterable(2 -> 0.5, 3 -> 1.2),
+  2 -> Iterable(3 -> 2.0),
+  3 -> Iterable.empty
+)
+```
+
+This method signature is:
+```
+def apply[N, V: Numeric](mappings: (N, Iterable[(N, V)])*): Graph[N] & Weighted[N, V]
+```
+
+Here:
+- Each tuple `(N, Iterable[(N, V)])` associates node `N` with its outgoing edges and the weight of each edge.
+- Supported for any numeric type `V` (e.g., `Int`, `Double`, `Float`).
+- The resulting graph implements both the `Graph[N]` operations as well as the `Weighted[N, V]` trait, which provides access to the edge weights via `weight(from, to)`.
+
+**Example Usage:**
+
+```scala
+val weightedGraph = Graph(
+  "A" -> Iterable("B" -> 10, "C" -> 20),
+  "B" -> Iterable("C" -> 5),
+  "C" -> Iterable.empty[String, Int]
+)
+
+val weightAB: Int = weightedGraph.weight("A", "B") // 10
+val weightBC: Int = weightedGraph.weight("B", "C") // 5
+```
+
+This construction is ideal for small static weighted graphs, test fixtures, or when your data is already available as node-to-adjacent-with-weight mappings. All standard graph operations remain available, and you can query weights as needed via the returned `Weighted` trait.
 
 ### Loading Graphs from Files
 
@@ -263,6 +393,52 @@ val (distance, path) = weightedGraph.findShortestPath(1, 5)
 val allDistances = weightedGraph.findShortestPaths(1)
 // allDistances: Map[N, Int]
 ```
+
+## Graph Traits and Implementations
+
+This library provides a set of flexible abstractions and implementations for representing graphs of various types:
+
+### Main Traits
+
+- **Graph[N]**  
+  The core trait that defines a graph over nodes of type `N`. Key members include:
+  - `nodes: Traversable[N]` &mdash; all nodes in the graph.
+  - `adjacent: N => Traversable[N]` &mdash; immediate neighbors for each node.
+  - `edges: Traversable[(N, N)]` &mdash; directed edges of the graph.
+  - `reverse: Graph[N]` &mdash; the same graph with all edges reversed (for directed graphs).
+  - `nodesCount: Int`, `edgesCount: Long` – counts of nodes and edges.
+
+- **GenericGraph[N]**  
+  An abstract base for quickly defining graphs by just specifying nodes and the `adjacent` relation. Most methods (like `edges`, `reverse`, etc.) have default implementations.
+
+- **Weighted[N, V]**  
+  A trait for weighted graphs, providing a `weight: (N, N) => V` method for edge weights.
+
+- **Mutable[N]**  
+  A trait for mutable graphs, extending both the Growable and Shrinkable interfaces for edges. Provides methods to mutate the graph, remove nodes, and transform adjacency lists.
+
+### Built-in concrete implementations
+
+- **MapGraph[N]**  
+  An immutable graph that stores adjacency information as a `Map[N, Traversable[N]]`. Well-suited for static graphs of arbitrary node types.
+
+- **IntMapGraph**  
+  Like `MapGraph`, but specialized for integer nodes for performance.
+
+- **MutableMapGraph[N]**  
+  A mutable graph implementation, using a mutable map (`collection.mutable.Map`) from nodes to mutable adjacency lists. Supports direct mutation and efficient algorithms requiring graph rewrites.
+
+- **GenericReverseGraph[N]**  
+  A wrapper that presents the reversed view of any graph (swapping the direction of all edges on the fly).
+
+### How to Choose
+
+- Use `GenericGraph` and custom traits for maximum abstraction or advanced use cases.
+- Use `MapGraph` or `IntMapGraph` for static graphs.
+- Use `MutableMapGraph` when you need to build or alter the graph dynamically.
+
+With these types and traits, you can define, extend, or modify graphs to suit most algorithmic needs, using Scala’s collections and type system for flexibility and safety.
+
 
 ## Mermaid diagrams
 

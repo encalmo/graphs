@@ -22,31 +22,61 @@ import collection.mutable.{
 }
 import scala.collection.immutable.ArraySeq
 
-/** Base abstraction of the graph. */
+/** Base asbtraction of the graph-like data structures.
+  *
+  * @tparam N
+  *   The type of the nodes in the graph.
+  */
 trait Graph[N] {
+
+  /** The nodes in the graph. */
   def nodes: Traversable[N]
+
+  /** The adjacent nodes for each node. */
   def adjacent: N => Traversable[N]
+
+  /** Whether the node has any adjacent nodes. */
   def hasAdjacent(node: N): Boolean
+
+  /** The edges in the graph. */
   def edges: Traversable[(N, N)]
+
+  /** Whether the graph contains the node. */
   def contains(node: N): Boolean
+
+  /** The reverse of the graph. */
   def reverse: Graph[N]
+
+  /** The number of nodes in the graph. */
   def nodesCount: Int
+
+  /** The number of edges in the graph. */
   def edgesCount: Long
 }
 
 /** Weighted graph add-on */
 trait Weighted[N, V] {
+
+  /** The weight of the edge between two nodes. */
   def weight: (N, N) => V
 }
 
 /** Mutable graph add-on */
 trait Mutable[N] extends Growable[(N, N)] with Shrinkable[(N, N)] {
+
+  /** Remove a node from the graph. */
   def remove(node: N): this.type
+
+  /** Transform the graph. */
   def transform(f: (N, ArrayBuffer[N]) => ArrayBuffer[N]): this.type
+
+  /** Update the adjacent nodes for a node. */
   def update(node: N, adjacent: ArrayBuffer[N]): this.type
 }
 
-/** Simple graph defined by abstract nodes collection and adjacent nodes function. */
+/** Simple graph defined by abstract nodes collection and adjacent nodes function. Requires implementation of only two
+  * methods: nodes and adjacent.
+  */
 trait GenericGraph[N] extends Graph[N] {
   self =>
   override def edges: Traversable[(N, N)] = new Traversable[(N, N)] {
@@ -58,15 +88,17 @@ trait GenericGraph[N] extends Graph[N] {
   override def edgesCount: Long = nodes.foldLeft(0L) { case (sum, node) =>
     sum + adjacent(node).size
   }
+  override def hasAdjacent(node: N): Boolean = adjacent(node).nonEmpty
 }
 
+/** Reverse graph of the given graph. */
 final class GenericReverseGraph[N](origin: Graph[N]) extends GenericGraph[N] {
-  override def nodes: Traversable[N] = origin.nodes
+  inline override def nodes: Traversable[N] = origin.nodes
   override val adjacent: N => Traversable[N] = node =>
     Traversable[N] { f =>
       for (n <- origin.nodes if (origin.adjacent(n).contains(node))) do f(n)
     }
-  override def hasAdjacent(node: N): Boolean =
+  inline override def hasAdjacent(node: N): Boolean =
     origin.nodes.exists(n => adjacent(n).contains(node))
 
   override def edges: Traversable[(N, N)] = new Traversable[(N, N)] {
@@ -77,6 +109,7 @@ final class GenericReverseGraph[N](origin: Graph[N]) extends GenericGraph[N] {
   override val reverse = origin
 }
 
+/** Graph implemented as a map of nodes to adjacent nodes. */
 class MapGraph[N](
     private val nodeMap: Map[N, Traversable[N]] = Map[N, Traversable[N]]()
 ) extends GenericGraph[N] {
@@ -90,6 +123,7 @@ class MapGraph[N](
     s"MapGraph($nodeMap)"
 }
 
+/** Graph implemented as a map of nodes to adjacent nodes, where the nodes are integers. */
 final class IntMapGraph(
     private val nodeMap: Map[Int, Traversable[Int]] = Map[Int, Traversable[Int]]()
 ) extends MapGraph[Int] {
@@ -104,6 +138,10 @@ final class IntMapGraph(
 }
 
 object MutableMapGraph {
+
+  /** Create a mutable map graph from a given graph. If the graph is already a mutable map graph, return it directly.
+    * Otherwise, create a new mutable map graph from the given graph.
+    */
   inline def from[N](graph: Graph[N]): MutableMapGraph[N] =
     graph match {
       case x: MutableMapGraph[N] => x
@@ -111,6 +149,7 @@ object MutableMapGraph {
     }
 }
 
+/** Mutable graph implemented as a mutable map of nodes to adjacent nodes. */
 class MutableMapGraph[N](
     protected val nodeMap: MutableMap[N, ArrayBuffer[N]] = new HashMap[N, ArrayBuffer[N]]()
 ) extends GenericGraph[N]
@@ -217,6 +256,7 @@ object Graph {
 
   object GraphCycleFoundException extends Exception
 
+  /** Generic graph implementation created from a nodes collection and an adjacent nodes function. */
   final class GenericGraphImpl[N](
       val nodes: Traversable[N],
       val adjacent: N => Traversable[N]
@@ -225,6 +265,8 @@ object Graph {
     override def hasAdjacent(node: N): Boolean = adjacent(node).nonEmpty
   }
 
+  /** Weighted graph implementation created from a nodes collection, an adjacent nodes function, and a weight function.
+    */
   final class WeightedGraphImpl[N, V: Numeric](
       val nodes: Traversable[N],
       val adjacent: N => Traversable[N],
@@ -237,6 +279,7 @@ object Graph {
 
   def apply[N](): MutableMapGraph[N] = new MutableMapGraph[N]()
 
+  /** Create a map graph from a given map of nodes to adjacent nodes. */
   inline def apply[N](map: Map[N, Traversable[N]]): MapGraph[N] =
     inline scala.compiletime.erasedValue[N] match {
       case _: Int =>
@@ -247,6 +290,7 @@ object Graph {
         new MapGraph(map)
     }
 
+  /** Create a map graph from a given sequence of nodes and adjacent nodes. */
   inline def apply[N](mappings: (N, Traversable[N])*): MapGraph[N] =
     inline scala.compiletime.erasedValue[N] match {
       case _: Int =>
@@ -257,15 +301,19 @@ object Graph {
         new MapGraph(mappings.toMap)
     }
 
+  /** Create a generic graph from a given nodes collection and an adjacent nodes function. */
   inline def apply[N](nodes: Iterable[N], adjacent: N => Traversable[N]): Graph[N] =
     new GenericGraphImpl[N](nodes, adjacent)
 
+  /** Create a mutable map graph from a given sequence of edges. */
   inline def apply[N](edges: Traversable[(N, N)]): MutableMapGraph[N] =
     new MutableMapGraph[N]().addAll(edges)
 
+  /** Create a mutable map graph from a given iterator of edges. */
   inline def apply[N](edges: Iterator[(N, N)]): MutableMapGraph[N] =
     new MutableMapGraph[N]().addAll(edges)
 
+  /** Create a weighted graph from a given sequence of nodes and adjacent nodes with weights. */
   def apply[N, V: Numeric](
       mappings: (N, Iterable[(N, V)])*
   ): Graph[N] & Weighted[N, V] = {
@@ -277,17 +325,21 @@ object Graph {
     )
   }
 
+  /** Create a mutable map graph from a given graph. */
   inline def hardCopy[N](graph: Graph[N]): MutableMapGraph[N] =
     new MutableMapGraph[N]().addAll(graph.edges)
 
+  /** Reversed mutable map graph implementation. */
   final class ReversedMutableMapGraph[N](_reverse: Graph[N]) extends MutableMapGraph[N] {
     override lazy val reverse: Graph[N] = _reverse
   }
 
+  /** Create a reversed mutable map graph from a given graph. */
   inline def hardCopyReversed[N](graph: Graph[N]): MutableMapGraph[N] = {
     new ReversedMutableMapGraph[N](graph).addReverse(graph.edges)
   }
 
+  /** Read a graph from a given edge list file. */
   def readFromEdgeListFile(
       path: Source,
       reversed: Boolean = false
@@ -303,6 +355,7 @@ object Graph {
     Graph(edges)
   }
 
+  /** Read a graph from a given adjacent list file. */
   def readFromAdjacentListFile(path: Source): Graph[Int] = {
     def parseNodeAdjacentList(line: String): (Int, Seq[Int]) = {
       val tokens = line.split('\t')
@@ -319,6 +372,7 @@ object Graph {
     new GenericGraphImpl[Int](nodeMap.keys, nodeMap)
   }
 
+  /** Read a weighted graph from a given adjacent weight list file. */
   def readFromAdjacentWeightListFile(
       path: Source
   ): Graph[Int] & Weighted[Int, Int] = {
@@ -349,6 +403,7 @@ object Graph {
     )
   }
 
+  /** Depth-first search visitor. */
   trait DfsVisitor[N] {
     def start(node: N) = {}
     def before(node: N) = {}
@@ -448,6 +503,7 @@ object Graph {
       }
     }
 
+    /** Find cycles in the graph. */
     def findCycles: Vector[N] = {
       var cycles: Vector[N] = Vector.empty[N]
       val marks = new HashMap[N, Char]().withDefaultValue('0')
@@ -457,6 +513,7 @@ object Graph {
       cycles
     }
 
+    /** Find cycles in the graph starting at given node. */
     def findCycles(
         node: N,
         marks: MutableMap[N, Char] = new HashMap[N, Char]().withDefaultValue('0')
@@ -473,6 +530,7 @@ object Graph {
       cycles
     }
 
+    /** Check if the graph has cycles. */
     def hasCycles: Boolean = {
       val marks = new HashMap[N, Char]().withDefaultValue('0')
       def checkCycles(node: N): Unit = {
@@ -491,6 +549,7 @@ object Graph {
       }
     }
 
+    /** Sort the graph topologically. */
     def sortTopologically: List[N] = {
       var counter = graph.nodesCount
       var priorities: List[N] = Nil
@@ -543,6 +602,7 @@ object Graph {
       graph.nodes.sortedValuesOfGroupBy(leaders)(c => -c.size)
     }
 
+    /** Merge two nodes in the mutable map graph. */
     def mergeNodes(
         mergedNode: N,
         removedNode: N
@@ -576,6 +636,7 @@ object Graph {
       g
     }
 
+    /** Count the number of random cuts in the graph. */
     def randomCutCount: Int = {
 
       def randomizedQueue[N](seq: Traversable[N]): Queue[N] = {
