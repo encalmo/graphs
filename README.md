@@ -13,11 +13,11 @@ Scala library for processing graphs.
 
 Use with SBT
 
-    libraryDependencies += "org.encalmo" %% "graphs" % "0.11.0"
+    libraryDependencies += "org.encalmo" %% "graphs" % "0.12.0"
 
 or with SCALA-CLI
 
-    //> using dep org.encalmo::graphs:0.11.0
+    //> using dep org.encalmo::graphs:0.12.0
 
 ## Table of contents
 
