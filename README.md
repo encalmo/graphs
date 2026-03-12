@@ -73,6 +73,67 @@ The library implements several essential graph algorithms out of the box. These 
 - **Min-Cut (Karger's Algorithm)**: Estimates the minimum cut of an undirected graph.
 - **Graph Reversal**: Obtain a reversed version of a directed graph.
 
+## Graph[N] is an interface, not a concrete structure
+
+The type `Graph[N]` in this library is an **interface** (trait) which abstracts over the underlying data structure or representation of the graph. This means that when you use a `Graph[N]`, you are working through a uniform API for querying nodes, edges, adjacency, and running algorithms, **regardless of how the graph is actually stored** internally.
+
+Different concrete implementations back a `Graph[N]`, including:
+- **`MapGraph[N]`**: Backed by an immutable `Map[N, Traversable[N]]`.
+- **`MutableMapGraph[N]`**: Backed by a mutable map for efficient updates.
+- **`GenericGraphImpl[N]`**: Allows you to wrap any node collection and adjacency function as a graph.
+- **`WeightedGraphImpl[N, V]`**: Stores additional weight data for weighted graphs.
+
+### Providing Custom `Graph[N]` Implementations
+
+You are not limited to the built-in graph classes—**you can create your own `Graph[N]` implementation by wrapping your existing data structure or class hierarchy**, as long as you supply the required interface methods.
+
+The minimal required interface is:
+
+- `nodes: Traversable[N]` — yields all nodes of the graph
+- `adjacent(node: N): Traversable[N]` — yields all nodes directly reachable from `node`
+- (Optionally) any other methods of the `Graph[N]` trait you wish to override
+
+#### Wrapping Existing Data Structures
+
+Suppose you already have nodes stored in a collection, and for each node you have a way to get its out-neighbors, you can use `Graph.GenericGraphImpl` to quickly expose them as a `Graph[N]`. Example:
+
+```scala
+import org.encalmo.data.Graph
+
+case class MyNode(id: Int, neighbors: Seq[MyNode])
+val a = MyNode(1, Nil)
+val b = MyNode(2, Nil)
+val c = MyNode(3, Nil)
+
+a.neighbors :+= b
+b.neighbors :+= c
+
+val allNodes = Seq(a, b, c)
+
+val myGraph: Graph[MyNode] = new Graph.GenericGraphImpl[MyNode](
+  allNodes,
+  (n: MyNode) => n.neighbors
+)
+```
+
+Now, `myGraph` supports all the graph algorithms and queries from this library, even though your internal structure is custom.
+
+#### Custom Class Hierarchies
+
+If you have elaborate class hierarchies (e.g., a complex `Node` tree), you can always define your own subclass of `Graph[N]` or directly implement the `GenericGraph[N]` trait, providing logic for enumerating nodes and their adjacency.
+
+Example (using an inner class):
+
+```scala
+class MyGraph(nodesSet: Set[Node]) extends Graph.GenericGraph[Node] {
+  override def nodes: Traversable[Node] = nodesSet
+  override def adjacent(node: Node): Traversable[Node] = node.childNodes
+  // Optionally, override more methods for efficiency
+}
+```
+
+This makes the library a powerful universal tool for querying and transforming *any* graph-like object structures in your codebase, with minimal changes to your domain models.
+
 ## Creating a Graph
 
 You can create graphs using the `Graph` companion object's `apply` methods. These support both unweighted (default) and weighted graphs, with intuitive syntax.
